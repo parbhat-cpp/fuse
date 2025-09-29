@@ -1,0 +1,9 @@
+services:
+  production:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "5173:3000"
+    env_file:
+      - .env

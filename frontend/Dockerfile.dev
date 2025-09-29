@@ -1,0 +1,14 @@
+FROM node:23-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Expose Vite dev server
+EXPOSE 5173
+
+# Enable hot reloading with host binding
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

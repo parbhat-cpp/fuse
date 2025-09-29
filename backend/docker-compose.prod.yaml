@@ -1,0 +1,40 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+services:
+  fuse-server-prod:
+    container_name: fuse-server-prod
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - fuse-network
+  redis:
+    image: redis:7-alpine
+    env_file:
+      - .env
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0
+    volumes:
+      - redis-data:/data
+    networks:
+      - fuse-network
+volumes:
+  redis-data:
+networks:
+  fuse-network:
+    driver: bridge

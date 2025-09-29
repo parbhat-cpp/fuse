@@ -1,0 +1,13 @@
+FROM node:23-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --frozen-lockfile
+
+COPY . .
+RUN npm run build
+
+# Run Nitro server
+EXPOSE 5173
+CMD ["node", ".output/server/index.mjs"]
