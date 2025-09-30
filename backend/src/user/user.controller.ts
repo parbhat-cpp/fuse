@@ -9,8 +9,6 @@ import {
   ParseUUIDPipe,
   BadRequestException,
   UseGuards,
-  Query,
-  Redirect,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -46,11 +44,5 @@ export class UserController {
     if (!id) throw new BadRequestException('Provide user id to delete user');
 
     return this.userService.remove(id);
-  }
-
-  @Get('googleauth')
-  @Redirect()
-  googleAuth(@Query('code') code: string, @Query('next') next: string) {
-    return this.userService.googleAuth(code, next);
   }
 }

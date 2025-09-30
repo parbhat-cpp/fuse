@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { SocketModule } from './socket/socket.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RoomsModule } from './rooms/rooms.module';
 import 'dotenv/config';
@@ -18,7 +17,6 @@ import 'dotenv/config';
       autoLoadEntities: true,
     }),
     UserModule,
-    SocketModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET as string,
@@ -29,4 +27,4 @@ import 'dotenv/config';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

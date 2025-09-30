@@ -5,17 +5,12 @@ import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTr
 import { HiOutlineMenuAlt4 } from "react-icons/hi";
 import { AiOutlineClose } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
-import { useState } from 'react';
-import SignupForm from '../auth/SignupForm';
-import LoginForm from '../auth/LoginForm';
 import useAuth from '@/hooks/useAuth';
 import { supabaseClient } from '@/supabase-client';
 
 export default function Header() {
   const user = useAuth();
   const navigate = useNavigate();
-
-  const [authDialogState, setAuthDialogState] = useState<"Sign up" | "Log in">("Log in");
 
   const handleGoogleSignin = async () => {
     await supabaseClient.auth.signInWithOAuth({
@@ -51,14 +46,9 @@ export default function Header() {
             <DialogContent>
               <DialogHeader>
                 <h4 className='text-center'>
-                  {authDialogState}
+                  Login
                 </h4>
               </DialogHeader>
-              {
-                authDialogState === "Sign up" ?
-                  <SignupForm setAuthDialogState={setAuthDialogState} /> :
-                  <LoginForm setAuthDialogState={setAuthDialogState} />
-              }
               <div>
                 <PrimaryButton className='w-full flex items-center justify-center gap-3' onClick={handleGoogleSignin}>
                   <FcGoogle size={25} /> Continue with Google

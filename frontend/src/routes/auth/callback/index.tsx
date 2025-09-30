@@ -1,5 +1,5 @@
 import { supabaseClient } from '@/supabase-client';
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 export const Route = createFileRoute('/auth/callback/')({
@@ -7,8 +7,6 @@ export const Route = createFileRoute('/auth/callback/')({
 })
 
 function RouteComponent() {
-    const navigate = useNavigate();
-
     useEffect(() => {
         (async () => {
             const { data: { session }, error } = await supabaseClient.auth.getSession();

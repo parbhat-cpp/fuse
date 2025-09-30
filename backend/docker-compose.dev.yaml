@@ -1,6 +1,6 @@
 services:
-  fuse-server-dev:
-    container_name: fuse-server-dev
+  dev:
+    container_name: dev
     build:
       context: .
       dockerfile: Dockerfile.dev

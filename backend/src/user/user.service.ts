@@ -3,7 +3,6 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -18,7 +17,6 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    private readonly request: Request,
   ) { }
 
   /**
@@ -106,20 +104,5 @@ export class UserService {
     }
 
     return 'User deleted';
-  }
-
-  async googleAuth(code: string, next: string) {
-    if (code) {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-      Logger.debug(data);
-
-      if (!error) {
-        return { url: `${process.env.CLIENT_URL}?googleauth=success`, statusCode: HttpStatus.TEMPORARY_REDIRECT };
-      } else {
-        return { url: `${process.env.CLIENT_URL}?googleauth=failed`, statusCode: HttpStatus.TEMPORARY_REDIRECT };
-      }
-    }
-    return { url: `${process.env.CLIENT_URL}?googleauth=failed`, statusCode: HttpStatus.TEMPORARY_REDIRECT };
   }
 }
