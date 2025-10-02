@@ -2,10 +2,11 @@ import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/commo
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class WsAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) { }
+  constructor(private jwtService: JwtService, private redisService: RedisService) { }
 
   async canActivate(
     context: ExecutionContext,
@@ -19,12 +20,13 @@ export class WsAuthGuard implements CanActivate {
     }
 
     try {
-      await this.jwtService.verifyAsync(token, {
+      const user = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET as string,
       });
-      socket['user'] = {
-        socketId: socket.id,
-      };
+
+      this.redisService.redis.hset(`user:${user.sub}`, { socketId: socket.id });
+
+      socket['userId'] = user.sub;
 
       return true;
     } catch (e) {

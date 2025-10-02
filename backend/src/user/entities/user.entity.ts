@@ -31,6 +31,24 @@ export class User {
     nullable: true,
   })
   premium_account?: string;
+
+  @Column({
+    type: 'text',
+    nullable: false,
+  })
+  email: string;
+
+  @Column({
+    type: "timestamptz",
+    default: new Date(),
+  })
+  created_at: string;
+
+  @Column({
+    type: "timestamptz",
+    default: new Date(),
+  })
+  updated_at: string;
 }
 
 export interface UserType {
@@ -39,12 +57,7 @@ export interface UserType {
   username: string;
   avatar_url: string;
   premium_account: string;
-}
-export interface SocketUserType {
-  id: UUID;
-  socketId: string;
-  full_name: string;
-  username: string;
-  avatar_url: string;
-  premium_account: string;
+  email: string;
+  created_at: string;
+  updated_at: string;
 }
