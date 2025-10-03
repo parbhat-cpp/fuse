@@ -3,7 +3,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { RoomsService } from './rooms.service';
 import { RoomEvents } from './events';
 import { Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { WsAuthGuard } from 'src/ws-auth/ws-auth.guard';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { randomUUID } from 'node:crypto';
@@ -126,7 +126,6 @@ export class RoomsGateway {
   @SubscribeMessage(RoomEvents.EXIT_ROOM)
   async exitRoom(@ConnectedSocket() client: Socket, @MessageBody() roomId: string) {
     const userId = client['userId'];
-    Logger.debug(userId);
 
     const publicRoomExists = await this.redisService.redis.hexists(
       `${RoomType.PUBLIC}:${roomId}`,
@@ -149,22 +148,27 @@ export class RoomsGateway {
 
       const roomData = await this.redisService.redis.hgetall(`${roomType}:${roomId}`);
 
-      const roomDataJson: Room = unformatRoomData(roomData);
+      
+      const roomDataJson = unformatRoomData(roomData);
 
       const roomAdminSocketId = roomDataJson['attendeesId'][0];
 
       // When room admin exit room
-      if (roomAdminSocketId === userId) {
+      if (roomAdminSocketId === client.id) {
         for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
           const attendeeSocketId = roomDataJson.attendeesId[i];
           client.to(attendeeSocketId).emit(RoomEvents.LEAVE_ROOM);
 
-          await this.redisService.redis.hdel(roomType, roomId);
         }
+        await this.redisService.redis.del(`${roomType}:${roomId}`);
       } else {
         // Get user info
         const user = roomDataJson.attendees.filter(
           (attendee) => attendee.id === userId,
+        );
+
+        roomDataJson.attendees = roomDataJson.attendees.filter(
+          (attendee) => attendee.id !== userId,
         );
 
         // Remove user from room and update
@@ -174,7 +178,7 @@ export class RoomsGateway {
 
         roomDataJson.attendeesCount -= 1;
 
-        await this.redisService.redis.hset(roomType, formatRoomData(roomDataJson));
+        await this.redisService.redis.hset(`${roomType}:${roomId}`, formatRoomData(roomDataJson));
 
         client.emit(
           RoomEvents.ATTENDEE_LEFT,
