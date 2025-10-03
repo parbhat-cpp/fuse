@@ -113,13 +113,83 @@ export class RoomsGateway {
 
       client.emit(RoomEvents.ENTER_ROOM, roomDataJson);
 
-      client.to(roomDataJson.attendeesId).emit(RoomEvents.NEW_ATTENDEE, user);
+      for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+          const attendeeSocketId = roomDataJson.attendeesId[i];
+          client.to(attendeeSocketId).emit(RoomEvents.NEW_ATTENDEE, user);
+      }
 
-      // for (let i = 0; i < roomDataJson.attendees.length - 1; i++) {
-      //   const userSocketId = roomDataJson.attendeesId[i];
+    } else {
+      client.emit(RoomEvents.ROOM_NOT_FOUND);
+    }
+  }
 
-      //   client.to(userSocketId).emit(RoomEvents.NEW_ATTENDEE, user);
-      // }
+  @SubscribeMessage(RoomEvents.EXIT_ROOM)
+  async exitRoom(@ConnectedSocket() client: Socket, @MessageBody() roomId: string) {
+    const userId = client['userId'];
+    Logger.debug(userId);
+
+    const publicRoomExists = await this.redisService.redis.hexists(
+      `${RoomType.PUBLIC}:${roomId}`,
+      "roomId",
+    );
+
+    const privateRoomExists = await this.redisService.redis.hexists(
+      `${RoomType.PRIVATE}:${roomId}`,
+      "roomId",
+    );
+
+    if (publicRoomExists || privateRoomExists) {
+      let roomType = '';
+
+      if (publicRoomExists) {
+        roomType = RoomType.PUBLIC;
+      } else {
+        roomType = RoomType.PRIVATE;
+      }
+
+      const roomData = await this.redisService.redis.hgetall(`${roomType}:${roomId}`);
+
+      const roomDataJson: Room = unformatRoomData(roomData);
+
+      const roomAdminSocketId = roomDataJson['attendeesId'][0];
+
+      // When room admin exit room
+      if (roomAdminSocketId === userId) {
+        for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+          const attendeeSocketId = roomDataJson.attendeesId[i];
+          client.to(attendeeSocketId).emit(RoomEvents.LEAVE_ROOM);
+
+          await this.redisService.redis.hdel(roomType, roomId);
+        }
+      } else {
+        // Get user info
+        const user = roomDataJson.attendees.filter(
+          (attendee) => attendee.id === userId,
+        );
+
+        // Remove user from room and update
+        roomDataJson.attendeesId = roomDataJson.attendeesId.filter(
+          (attendeeId) => attendeeId !== client.id,
+        );
+
+        roomDataJson.attendeesCount -= 1;
+
+        await this.redisService.redis.hset(roomType, formatRoomData(roomDataJson));
+
+        client.emit(
+          RoomEvents.ATTENDEE_LEFT,
+          user[0]?.username ?? user[0]?.full_name,
+        );
+
+        for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+          client
+            .to(roomDataJson.attendeesId[i])
+            .emit(
+              RoomEvents.ATTENDEE_LEFT,
+              user[0]?.username ?? user[0]?.full_name,
+            );
+        }
+      }
     } else {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
     }
