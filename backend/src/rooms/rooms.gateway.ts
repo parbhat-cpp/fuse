@@ -11,6 +11,7 @@ import { RoomType } from './types';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { Room } from './dto/room.dto';
 import { formatRoomData, unformatRoomData } from './util';
+import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
 
 @UseGuards(WsAuthGuard)
 @WebSocketGateway({
@@ -114,8 +115,8 @@ export class RoomsGateway {
       client.emit(RoomEvents.ENTER_ROOM, roomDataJson);
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
-          const attendeeSocketId = roomDataJson.attendeesId[i];
-          client.to(attendeeSocketId).emit(RoomEvents.NEW_ATTENDEE, user);
+        const attendeeSocketId = roomDataJson.attendeesId[i];
+        client.to(attendeeSocketId).emit(RoomEvents.NEW_ATTENDEE, user);
       }
 
     } else {
@@ -148,7 +149,7 @@ export class RoomsGateway {
 
       const roomData = await this.redisService.redis.hgetall(`${roomType}:${roomId}`);
 
-      
+
       const roomDataJson = unformatRoomData(roomData);
 
       const roomAdminSocketId = roomDataJson['attendeesId'][0];
@@ -193,6 +194,71 @@ export class RoomsGateway {
               user[0]?.username ?? user[0]?.full_name,
             );
         }
+      }
+    } else {
+      client.emit(RoomEvents.ROOM_NOT_FOUND);
+    }
+  }
+
+  @SubscribeMessage(RoomEvents.REMOVE_ATTENDEE)
+  async removeAttendee(@ConnectedSocket() client: Socket, @MessageBody() payload: RemoveAttendeeDto) {
+    const roomId = payload.roomId;
+    const attendeeId = payload.attendeeId;
+    const attendeeUserId = payload.attendeeUserId;
+
+    const publicRoomExists = await this.redisService.redis.hexists(
+      `${RoomType.PUBLIC}:${roomId}`,
+      "roomId",
+    );
+
+    const privateRoomExists = await this.redisService.redis.hexists(
+      `${RoomType.PRIVATE}:${roomId}`,
+      "roomId",
+    );
+
+    if (publicRoomExists || privateRoomExists) {
+      let roomType = '';
+
+      if (publicRoomExists) {
+        roomType = RoomType.PUBLIC;
+      } else {
+        roomType = RoomType.PRIVATE;
+      }
+
+      const roomData = await this.redisService.redis.hgetall(`${roomType}:${roomId}`);
+
+      const roomDataJson = unformatRoomData(roomData);
+
+      const roomAdmin = roomDataJson['attendeesId'][0];
+
+      if (roomAdmin !== client.id) {
+        return;
+      }
+
+      client.to(attendeeId).emit(RoomEvents.LEAVE_ROOM);
+
+      const user = roomDataJson.attendees.filter(
+        (attendee) => attendee.id === attendeeUserId,
+      );
+
+      roomDataJson.attendees = roomDataJson.attendees.filter(
+        (attendee) => attendee.id !== attendeeUserId,
+      );
+
+      roomDataJson.attendeesId = roomDataJson.attendeesId.filter(
+        (attendee) => attendee !== attendeeId,
+      );
+
+      roomDataJson.attendeesCount -= 1;
+
+      await this.redisService.redis.hset(`${roomType}:${roomId}`, formatRoomData(roomDataJson));
+
+      client.emit(RoomEvents.ATTENDEE_KICKED, user[0]);
+
+      for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+        client
+          .to(roomDataJson.attendeesId[i])
+          .emit(RoomEvents.ATTENDEE_KICKED, user[0]);
       }
     } else {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
