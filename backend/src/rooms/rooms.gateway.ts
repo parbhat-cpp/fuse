@@ -12,6 +12,8 @@ import { JoinRoomDto } from './dto/join-room.dto';
 import { Room } from './dto/room.dto';
 import { formatRoomData, unformatRoomData } from './util';
 import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
+import { ChatDto } from './dto/chat.dto';
+import { UserType } from 'src/user/entities/user.entity';
 
 @UseGuards(WsAuthGuard)
 @WebSocketGateway({
@@ -259,6 +261,60 @@ export class RoomsGateway {
         client
           .to(roomDataJson.attendeesId[i])
           .emit(RoomEvents.ATTENDEE_KICKED, user[0]);
+      }
+    } else {
+      client.emit(RoomEvents.ROOM_NOT_FOUND);
+    }
+  }
+
+  @SubscribeMessage(RoomEvents.SEND_MESSAGE)
+  async sendMessage(@ConnectedSocket() client: Socket, @MessageBody() payload: ChatDto) {
+    const userId = payload.userId;
+    const roomId = payload.roomId;
+
+    const publicRoomExists = await this.redisService.redis.hexists(
+      `${RoomType.PUBLIC}:${roomId}`,
+      "roomId",
+    );
+
+    const privateRoomExists = await this.redisService.redis.hexists(
+      `${RoomType.PRIVATE}:${roomId}`,
+      "roomId",
+    );
+
+    if (publicRoomExists || privateRoomExists) {
+      let roomType = '';
+
+      if (publicRoomExists) {
+        roomType = RoomType.PUBLIC;
+      } else {
+        roomType = RoomType.PRIVATE;
+      }
+
+      const roomData = await this.redisService.redis.hgetall(`${roomType}:${roomId}`);
+
+      const roomDataJson = unformatRoomData(roomData);
+
+      let user: UserType;
+
+      if (roomDataJson.admin.id === userId) {
+        user = roomDataJson.admin;
+      } else {
+        const sender = roomDataJson.attendees.filter(
+          (attendee) => attendee.id === userId,
+        );
+        user = sender[0];
+      }
+
+      for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+        const userSocketId = roomDataJson.attendeesId[i];
+
+        if (userSocketId === client.id) continue;
+
+        client.to(userSocketId).emit(RoomEvents.RECEIVE_MESSAGE, {
+          sendBy: user,
+          message: payload.message,
+        });
       }
     } else {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
