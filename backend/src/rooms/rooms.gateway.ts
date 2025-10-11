@@ -51,6 +51,7 @@ export class RoomsGateway {
     payload.attendees = [];
     payload.attendeesId = [client.id];
     payload.attendeesCount = payload.attendees.length + 1;
+    const scheduleRoom = payload.startAt;
     payload.startAt = payload?.startAt ?? new Date();
 
     const roomData = formatRoomData(payload);
@@ -60,7 +61,17 @@ export class RoomsGateway {
     } else {
       await this.redisService.redis.hset(`${RoomType.PRIVATE}:${roomId}`, roomData);
     }
-    client.emit(RoomEvents.ROOM_CREATED, roomData);
+
+    const resData = unformatRoomData(roomData);
+
+    if (scheduleRoom)
+      client.emit(RoomEvents.ROOM_SCHEDULED, {
+        roomName: resData.roomName,
+        roomId: resData.roomId,
+        startAt: resData.startAt,
+      });
+    else
+      client.emit(RoomEvents.ROOM_CREATED, resData);
   }
 
   @SubscribeMessage(RoomEvents.JOIN_ROOM)

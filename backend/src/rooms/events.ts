@@ -1,6 +1,7 @@
 export enum RoomEvents {
     CREATE_ROOM = 'create-room',
     JOIN_ROOM = 'join-room',
+    ROOM_SCHEDULED = 'room-scheduled',
     ROOM_EXISTS = 'room-exists',
     ROOM_CREATED = 'room-created',
     ROOM_LIMIT_REACHED = 'room-limit-reached',

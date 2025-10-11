@@ -11,8 +11,8 @@ export const formatRoomData = (payload: CreateRoomDto): Record<string, string> =
         isPublic: `${payload.isPublic}`,
         roomId: payload.roomId,
         roomName: payload.roomName,
-        startAt: payload.startAt.toDateString(),
-        createdAt: payload?.createdAt?.toDateString() ?? new Date().toDateString(),
+        startAt: payload.startAt ? new Date(payload.startAt).toISOString() : new Date().toISOString(),
+        createdAt: payload?.createdAt?.toISOString() ?? new Date().toISOString(),
     };
 }
 
