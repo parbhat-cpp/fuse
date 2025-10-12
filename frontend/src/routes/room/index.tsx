@@ -1,0 +1,59 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { IoMdVideocam } from "react-icons/io";
+import { IoVideocamOff } from "react-icons/io5";
+import { FaMicrophone } from "react-icons/fa";
+import { FaMicrophoneSlash } from "react-icons/fa";
+import { MdOutlineScreenShare } from "react-icons/md";
+import { MdOutlineStopScreenShare } from "react-icons/md";
+import { ImPhoneHangUp } from "react-icons/im";
+import { IoMdChatbubbles } from "react-icons/io";
+import { MdGroups } from "react-icons/md";
+import { SlOptionsVertical } from "react-icons/sl";
+import { lazy } from 'react';
+import { roomData } from '@/store/room';
+
+const MembersDrawer = lazy(() => import('@/components/room/MembersDrawer'));
+const ChatDrawer = lazy(() => import('@/components/room/ChatDrawer'));
+const MoreOptions = lazy(() => import('@/components/room/MoreOptions'));
+
+export const Route = createFileRoute('/room/')({
+    component: RouteComponent,
+})
+
+function RouteComponent() {
+    console.log(roomData);
+
+    return <div className='flex flex-col gap-5 bg-primary-surface p-5 h-screen'>
+        {/* member's video */}
+        <div className='flex-1 bg-red-100 rounded-lg'>
+
+        </div>
+        {/* bottom bar */}
+        <div className='grid lg:grid-cols-3 grid-cols-1 items-center'>
+            <div className='lg:col-start-2'>
+                <div className='flex gap-5 justify-evenly p-3 rounded-lg bg-primary-background text-primary-paragraph'>
+                    <IoMdVideocam size={25} />
+                    <FaMicrophone size={25} />
+                    <MdOutlineScreenShare size={25} />
+                    <ImPhoneHangUp size={25} />
+                    <div className='lg:hidden block'>
+                        <MoreOptions>
+                            <SlOptionsVertical size={20} />
+                        </MoreOptions>
+                    </div>
+                </div>
+            </div>
+            <div className='lg:flex hidden gap-5 items-center place-self-end px-4 text-primary-paragraph'>
+                <MembersDrawer admin={roomData.state?.admin} members={roomData.state?.attendees}>
+                    <MdGroups size={34} />
+                </MembersDrawer>
+                <ChatDrawer>
+                    <IoMdChatbubbles size={25} />
+                </ChatDrawer>
+                <MoreOptions>
+                    <SlOptionsVertical size={20} />
+                </MoreOptions>
+            </div>
+        </div>
+    </div>
+}

@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { canJoinRoom, roomJoinLink, toLocalDate } from '@/lib/utils';
 import { useSocket } from '@/socket';
-import { createFileRoute } from '@tanstack/react-router';
+import { roomData } from '@/store/room';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -17,6 +18,8 @@ export const Route = createFileRoute('/app/')({
 
 function RouteComponent() {
     const socket = useSocket("room");
+    const navigate = useNavigate();
+
     const [openRoomScheduledDialog, setOpenRoomScheduledDialog] = useState(false);
     const [openDenyRoomJoinDialog, setOpenDenyRoomJoinDialog] = useState(false);
     const [scheduledRoomData, setScheduledRoomData] = useState<Record<string, any> | undefined>(undefined);
@@ -25,7 +28,10 @@ function RouteComponent() {
         if (!socket) return;
 
         socket?.on("room-created", (data) => {
-            console.log(data);
+            roomData.setState(() => data);
+            navigate({
+                to: '/room',
+            });
         });
 
         socket?.on("room-scheduled", (data) => {
@@ -50,7 +56,10 @@ function RouteComponent() {
                     startAt: data['startAt'],
                 });
             } else {
-                console.log(data);
+                roomData.setState(() => data);
+                navigate({
+                    to: '/room',
+                });
             }
         });
 
