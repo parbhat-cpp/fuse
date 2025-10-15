@@ -1,10 +1,9 @@
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, OnGatewayConnection, OnGatewayDisconnect, WebSocketServer, OnGatewayInit, WsException } from '@nestjs/websockets';
 import { RedisService } from 'src/redis/redis.service';
 import { RoomsService } from './rooms.service';
 import { RoomEvents } from './events';
-import { Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
-import { WsAuthGuard } from 'src/ws-auth/ws-auth.guard';
+import { Server, Socket } from 'socket.io';
+import { Logger } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { randomUUID } from 'node:crypto';
 import { RoomType } from './types';
@@ -14,19 +13,68 @@ import { formatRoomData, unformatRoomData } from './util';
 import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
 import { ChatDto } from './dto/chat.dto';
 import { UserType } from 'src/user/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
-@UseGuards(WsAuthGuard)
 @WebSocketGateway({
   namespace: "/room",
   cors: {
     origin: "*",
   },
 })
-export class RoomsGateway {
+export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect {
+  @WebSocketServer()
+  server: Server;
+
+  private userIdToSocketId: Map<string, string> = new Map();
+
   constructor(
+    private jwtService: JwtService,
     private readonly redisService: RedisService,
     private readonly roomsService: RoomsService,
   ) { }
+
+  afterInit(server: Server) {
+    server.use(async (socket: Socket, next) => {
+      try {
+        const token = socket.handshake.auth?.token ||
+          socket.handshake.headers?.authorization?.split(' ')[1];
+
+        if (!token) {
+          socket.disconnect();
+          throw new WsException('Authorization Error: No token provided');
+        }
+        const user = await this.jwtService.verifyAsync(token, {
+          secret: process.env.JWT_SECRET as string,
+        });
+
+        this.redisService.redis.hset(`user:${user.sub}`, { socketId: socket.id });
+
+        socket.data.userId = user.sub;
+        socket['userId'] = user.sub;
+
+        next();
+      } catch (error) {
+        socket.disconnect();
+        Logger.error(error);
+      }
+    });
+  }
+
+  handleConnection(@ConnectedSocket() client: Socket) {
+    const userId = client.data.userId;
+
+    if (!userId) return;
+
+    this.userIdToSocketId.set(userId, client.id);
+  }
+
+  handleDisconnect(@ConnectedSocket() client: Socket) {
+    const userId = client.data.userId;
+
+    if (!userId) return;
+
+    this.userIdToSocketId.delete(userId);
+  }
 
   @SubscribeMessage(RoomEvents.CREATE_ROOM)
   async createRoom(@ConnectedSocket() client: Socket, @MessageBody() payload: CreateRoomDto) {
@@ -49,7 +97,7 @@ export class RoomsGateway {
     }
 
     payload.attendees = [];
-    payload.attendeesId = [client.id];
+    payload.attendeesId = [payload.admin.id];
     payload.attendeesCount = payload.attendees.length + 1;
     const scheduleRoom = payload.startAt;
     payload.startAt = payload?.startAt ?? new Date();
@@ -78,6 +126,7 @@ export class RoomsGateway {
   async joinRoom(@ConnectedSocket() client: Socket, @MessageBody() payload: JoinRoomDto) {
     const roomId = payload.roomId;
     const user = payload.joinee;
+    const userId = client.data.userId;
 
     if (!roomId) {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
@@ -121,7 +170,7 @@ export class RoomsGateway {
 
       roomDataJson.attendeesCount += 1;
       roomDataJson.attendees.push(user);
-      roomDataJson.attendeesId.push(client.id);
+      roomDataJson.attendeesId.push(userId);
 
       await this.redisService.redis.hset(`${roomType}:${roomId}`, formatRoomData(roomDataJson));
 
@@ -139,7 +188,7 @@ export class RoomsGateway {
 
   @SubscribeMessage(RoomEvents.EXIT_ROOM)
   async exitRoom(@ConnectedSocket() client: Socket, @MessageBody() roomId: string) {
-    const userId = client['userId'];
+    const userId = client.data.userId;
 
     const publicRoomExists = await this.redisService.redis.hexists(
       `${RoomType.PUBLIC}:${roomId}`,
@@ -200,8 +249,10 @@ export class RoomsGateway {
         );
 
         for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+          const receiverId = this.userIdToSocketId.get(roomDataJson.attendeesId[i]);
+
           client
-            .to(roomDataJson.attendeesId[i])
+            .to(receiverId)
             .emit(
               RoomEvents.ATTENDEE_LEFT,
               user[0]?.username ?? user[0]?.full_name,
@@ -269,8 +320,10 @@ export class RoomsGateway {
       client.emit(RoomEvents.ATTENDEE_KICKED, user[0]);
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
+        const receiverId = this.userIdToSocketId.get(roomDataJson.attendeesId[i]);
+
         client
-          .to(roomDataJson.attendeesId[i])
+          .to(receiverId)
           .emit(RoomEvents.ATTENDEE_KICKED, user[0]);
       }
     } else {
@@ -318,11 +371,13 @@ export class RoomsGateway {
       }
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
-        const userSocketId = roomDataJson.attendeesId[i];
+        const attendeeId = roomDataJson.attendeesId[i];
 
-        if (userSocketId === client.id) continue;
+        if (attendeeId === userId) continue;
 
-        client.to(userSocketId).emit(RoomEvents.RECEIVE_MESSAGE, {
+        const receiverId = this.userIdToSocketId.get(attendeeId);
+
+        client.to(receiverId).emit(RoomEvents.RECEIVE_MESSAGE, {
           sendBy: user,
           message: payload.message,
         });

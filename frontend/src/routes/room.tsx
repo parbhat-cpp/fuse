@@ -8,16 +8,16 @@ export const Route = createFileRoute('/room')({
 })
 
 function RouteComponent() {
-  useAuth();
-  const navigate = useNavigate();
+  // useAuth();
+  // const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!roomData.state) {
-      navigate({
-        to: "/app",
-      });
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!roomData.state) {
+  //     navigate({
+  //       to: "/app",
+  //     });
+  //   }
+  // }, []);
 
   return <main>
     <Outlet />

@@ -30,7 +30,7 @@ function RouteComponent() {
         socket?.on("room-created", (data) => {
             roomData.setState(() => data);
             navigate({
-                to: '/room',
+                to: '/app/room',
             });
         });
 
@@ -58,7 +58,7 @@ function RouteComponent() {
             } else {
                 roomData.setState(() => data);
                 navigate({
-                    to: '/room',
+                    to: '/app/room',
                 });
             }
         });

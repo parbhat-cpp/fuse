@@ -14,22 +14,22 @@ const MembersDrawer = (props: MembersDrawerProps) => {
                 {props.children}
             </DrawerTrigger>
             <DrawerContent>
-                <div className="mx-auto w-full max-w-sm">
+                <div className="h-[calc(100vh-81px)] mx-auto w-full max-w-sm">
                     <DrawerHeader>
                         <DrawerTitle>Members</DrawerTitle>
                     </DrawerHeader>
-                    <div>
-                        <div>
-                            <img src={props.admin?.['avatar_url']} />
-                            <p>{props.admin?.['username'] ?? props.admin?.['full_name']} (Admin)</p>
+                    <div className='h-full flex flex-col overflow-y-auto'>
+                        <div className='flex gap-3 items-center px-4 py-2'>
+                            <img src={decodeURIComponent(props.admin?.['avatar_url'])} height={50} width={50} className='rounded-full' />
+                            <p className='text-xl font-semibold'>{props.admin?.['username'] ?? props.admin?.['full_name']} (Admin)</p>
                         </div>
                         {
                             props.members?.map((member: string, index: number) => {
                                 const memberData = JSON.parse(member);
 
-                                return <div key={memberData['id']}>
-                                    <img src={memberData['avatar_url']} />
-                                    <p>{memberData['username'] ?? memberData['full_name']}</p>
+                                return <div key={memberData['id']} className='flex gap-3 items-center px-4 py-2'>
+                                    <img src={decodeURIComponent(memberData['avatar_url'])} height={50} width={50} className='rounded-full' />
+                                    <p className='text-xl font-semibold'>{memberData['username'] ?? memberData['full_name']}</p>
                                 </div>
                             })
                         }

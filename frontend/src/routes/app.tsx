@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute, useRouterState } from '@tanstack/react-router'
 import useAuth from '@/hooks/useAuth';
 import Sidebar from '@/components/app/Sidebar';
 import Notification from '@/components/app/Notification';
@@ -6,7 +6,8 @@ import { IoIosLogOut } from "react-icons/io";
 import PrimaryButton from '@/components/common/PrimaryButton';
 import BottomNavigation from '@/components/app/BottomNavigation';
 import SocketProvider from '@/socket';
-import { BASE_URL } from 'config';
+import { BASE_URL, ROUTES_NO_SIDEBAR } from 'config';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/app')({
     component: RouteComponent,
@@ -15,12 +16,23 @@ export const Route = createFileRoute('/app')({
 function RouteComponent() {
     const user = useAuth();
 
+    const [hideSidebar, setHideSidebar] = useState(false);
+    const routerState = useRouterState();
+    const currentPath = routerState.location.pathname;
+
+    useEffect(() => {
+        ROUTES_NO_SIDEBAR.forEach(route => {
+            if (currentPath.includes(route))
+                setHideSidebar(true);
+        });
+    }, []);
+
     return <SocketProvider config={{
         room: {
             url: `${BASE_URL}/room`,
         },
     }}>
-        <div className="flex h-[100dvh]">
+        {!hideSidebar ? <div className="flex h-[100dvh]">
             <Sidebar />
             {/* Main content */}
             <main className="flex flex-col flex-1 bg-secondary-background">
@@ -38,6 +50,9 @@ function RouteComponent() {
                 <Outlet />
                 <BottomNavigation />
             </main>
-        </div>
+        </div> :
+            <main>
+                <Outlet />
+            </main>}
     </SocketProvider>
 }
