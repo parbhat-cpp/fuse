@@ -179,7 +179,7 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
         const receiverId = this.userIdToSocketId.get(roomDataJson.attendeesId[i]);
 
-        client.to(receiverId).emit(RoomEvents.NEW_ATTENDEE, user);
+        client.to(receiverId).emit(RoomEvents.NEW_ATTENDEE, { roomData: roomDataJson, joinee: user });
       }
 
     } else {
@@ -244,7 +244,7 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
 
         client.emit(
           RoomEvents.ATTENDEE_LEFT,
-          user[0]?.username ?? user[0]?.full_name,
+          JSON.parse(user[0] as unknown as string)?.username ?? JSON.parse(user[0] as unknown as string)?.full_name,
         );
 
         for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
@@ -254,7 +254,7 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
             .to(receiverId)
             .emit(
               RoomEvents.ATTENDEE_LEFT,
-              user[0]?.username ?? user[0]?.full_name,
+              { roomData: roomDataJson, attendee: user[0] },
             );
         }
       }
@@ -266,7 +266,6 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
   @SubscribeMessage(RoomEvents.REMOVE_ATTENDEE)
   async removeAttendee(@ConnectedSocket() client: Socket, @MessageBody() payload: RemoveAttendeeDto) {
     const roomId = payload.roomId;
-    const attendeeId = payload.attendeeId;
     const attendeeUserId = payload.attendeeUserId;
 
     const publicRoomExists = await this.redisService.redis.hexists(
@@ -292,38 +291,38 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
 
       const roomDataJson = unformatRoomData(roomData);
 
-      const roomAdmin = roomDataJson['attendeesId'][0];
+      const roomAdminId = roomDataJson['attendeesId'][0];
 
-      if (roomAdmin !== client.id) {
+      if (this.userIdToSocketId.get(roomAdminId) !== client.id) {
         return;
       }
 
-      client.to(attendeeId).emit(RoomEvents.LEAVE_ROOM);
+      client.to(this.userIdToSocketId.get(attendeeUserId)).emit(RoomEvents.LEAVE_ROOM);
 
       const user = roomDataJson.attendees.filter(
-        (attendee) => attendee.id === attendeeUserId,
+        (attendee) => JSON.parse(attendee as unknown as string).id === attendeeUserId,
       );
 
       roomDataJson.attendees = roomDataJson.attendees.filter(
-        (attendee) => attendee.id !== attendeeUserId,
+        (attendee) => JSON.parse(attendee as unknown as string).id !== attendeeUserId,
       );
 
       roomDataJson.attendeesId = roomDataJson.attendeesId.filter(
-        (attendee) => attendee !== attendeeId,
+        (attendee) => attendee !== attendeeUserId,
       );
 
       roomDataJson.attendeesCount -= 1;
 
       await this.redisService.redis.hset(`${roomType}:${roomId}`, formatRoomData(roomDataJson));
 
-      client.emit(RoomEvents.ATTENDEE_KICKED, user[0]);
+      client.emit(RoomEvents.ATTENDEE_KICKED, { roomData: roomDataJson, attendee: user[0] });
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
         const receiverId = this.userIdToSocketId.get(roomDataJson.attendeesId[i]);
 
         client
           .to(receiverId)
-          .emit(RoomEvents.ATTENDEE_KICKED, user[0]);
+          .emit(RoomEvents.ATTENDEE_KICKED, { roomData: roomDataJson, attendee: user[0] });
       }
     } else {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
