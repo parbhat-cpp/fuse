@@ -177,8 +177,9 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
       client.emit(RoomEvents.ENTER_ROOM, roomDataJson);
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
-        const attendeeSocketId = roomDataJson.attendeesId[i];
-        client.to(attendeeSocketId).emit(RoomEvents.NEW_ATTENDEE, user);
+        const receiverId = this.userIdToSocketId.get(roomDataJson.attendeesId[i]);
+
+        client.to(receiverId).emit(RoomEvents.NEW_ATTENDEE, user);
       }
 
     } else {
@@ -211,32 +212,30 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
 
       const roomData = await this.redisService.redis.hgetall(`${roomType}:${roomId}`);
 
-
       const roomDataJson = unformatRoomData(roomData);
 
       const roomAdminSocketId = roomDataJson['attendeesId'][0];
 
       // When room admin exit room
-      if (roomAdminSocketId === client.id) {
+      if (roomAdminSocketId === userId) {
         for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
-          const attendeeSocketId = roomDataJson.attendeesId[i];
-          client.to(attendeeSocketId).emit(RoomEvents.LEAVE_ROOM);
-
+          const receiverId = this.userIdToSocketId.get(roomDataJson.attendeesId[i]);
+          client.to(receiverId).emit(RoomEvents.LEAVE_ROOM);
         }
         await this.redisService.redis.del(`${roomType}:${roomId}`);
       } else {
         // Get user info
         const user = roomDataJson.attendees.filter(
-          (attendee) => attendee.id === userId,
+          (attendee) => JSON.parse(attendee as unknown as string).id === userId,
         );
 
         roomDataJson.attendees = roomDataJson.attendees.filter(
-          (attendee) => attendee.id !== userId,
+          (attendee) => JSON.parse(attendee as unknown as string).id !== userId,
         );
 
         // Remove user from room and update
         roomDataJson.attendeesId = roomDataJson.attendeesId.filter(
-          (attendeeId) => attendeeId !== client.id,
+          (attendeeId) => attendeeId !== userId,
         );
 
         roomDataJson.attendeesCount -= 1;
@@ -364,10 +363,11 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
       if (roomDataJson.admin.id === userId) {
         user = roomDataJson.admin;
       } else {
-        const sender = roomDataJson.attendees.filter(
-          (attendee) => attendee.id === userId,
-        );
-        user = sender[0];
+        for (const attendee of roomDataJson.attendees) {
+          const sender = JSON.parse(attendee as unknown as string);
+          if (sender.id === userId)
+            user = sender;
+        }
       }
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
@@ -380,6 +380,7 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
         client.to(receiverId).emit(RoomEvents.RECEIVE_MESSAGE, {
           sendBy: user,
           message: payload.message,
+          sentAt: new Date().toISOString(),
         });
       }
     } else {

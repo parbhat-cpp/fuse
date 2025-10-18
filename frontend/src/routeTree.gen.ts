@@ -9,22 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RoomRouteImport } from './routes/room'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppSubscriptionRouteImport } from './routes/app/subscription'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppRoomsRouteImport } from './routes/app/rooms'
+import { Route as AppRoomRouteImport } from './routes/app/room'
 import { Route as AppFriendsRouteImport } from './routes/app/friends'
 import { Route as AuthCallbackIndexRouteImport } from './routes/auth/callback/index'
 import { Route as AppRoomIndexRouteImport } from './routes/app/room/index'
 
-const RoomRoute = RoomRouteImport.update({
-  id: '/room',
-  path: '/room',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -55,6 +50,11 @@ const AppRoomsRoute = AppRoomsRouteImport.update({
   path: '/rooms',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRoomRoute = AppRoomRouteImport.update({
+  id: '/room',
+  path: '/room',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFriendsRoute = AppFriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
@@ -66,26 +66,25 @@ const AuthCallbackIndexRoute = AuthCallbackIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoomIndexRoute = AppRoomIndexRouteImport.update({
-  id: '/room/',
-  path: '/room/',
-  getParentRoute: () => AppRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoomRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/room': typeof RoomRoute
   '/app/friends': typeof AppFriendsRoute
+  '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/subscription': typeof AppSubscriptionRoute
   '/app/': typeof AppIndexRoute
-  '/app/room': typeof AppRoomIndexRoute
+  '/app/room/': typeof AppRoomIndexRoute
   '/auth/callback': typeof AuthCallbackIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/room': typeof RoomRoute
   '/app/friends': typeof AppFriendsRoute
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -98,8 +97,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/room': typeof RoomRoute
   '/app/friends': typeof AppFriendsRoute
+  '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/subscription': typeof AppSubscriptionRoute
@@ -112,18 +111,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/room'
     | '/app/friends'
+    | '/app/room'
     | '/app/rooms'
     | '/app/settings'
     | '/app/subscription'
     | '/app/'
-    | '/app/room'
+    | '/app/room/'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/room'
     | '/app/friends'
     | '/app/rooms'
     | '/app/settings'
@@ -135,8 +133,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/room'
     | '/app/friends'
+    | '/app/room'
     | '/app/rooms'
     | '/app/settings'
     | '/app/subscription'
@@ -148,19 +146,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  RoomRoute: typeof RoomRoute
   AuthCallbackIndexRoute: typeof AuthCallbackIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/room': {
-      id: '/room'
-      path: '/room'
-      fullPath: '/room'
-      preLoaderRoute: typeof RoomRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -203,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRoomsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/room': {
+      id: '/app/room'
+      path: '/room'
+      fullPath: '/app/room'
+      preLoaderRoute: typeof AppRoomRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/friends': {
       id: '/app/friends'
       path: '/friends'
@@ -219,30 +216,41 @@ declare module '@tanstack/react-router' {
     }
     '/app/room/': {
       id: '/app/room/'
-      path: '/room'
-      fullPath: '/app/room'
+      path: '/'
+      fullPath: '/app/room/'
       preLoaderRoute: typeof AppRoomIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppRoomRoute
     }
   }
 }
 
+interface AppRoomRouteChildren {
+  AppRoomIndexRoute: typeof AppRoomIndexRoute
+}
+
+const AppRoomRouteChildren: AppRoomRouteChildren = {
+  AppRoomIndexRoute: AppRoomIndexRoute,
+}
+
+const AppRoomRouteWithChildren =
+  AppRoomRoute._addFileChildren(AppRoomRouteChildren)
+
 interface AppRouteChildren {
   AppFriendsRoute: typeof AppFriendsRoute
+  AppRoomRoute: typeof AppRoomRouteWithChildren
   AppRoomsRoute: typeof AppRoomsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
   AppIndexRoute: typeof AppIndexRoute
-  AppRoomIndexRoute: typeof AppRoomIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppFriendsRoute: AppFriendsRoute,
+  AppRoomRoute: AppRoomRouteWithChildren,
   AppRoomsRoute: AppRoomsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
   AppIndexRoute: AppIndexRoute,
-  AppRoomIndexRoute: AppRoomIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -250,7 +258,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  RoomRoute: RoomRoute,
   AuthCallbackIndexRoute: AuthCallbackIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -10,19 +10,37 @@ import { ImPhoneHangUp } from "react-icons/im";
 import { IoMdChatbubbles } from "react-icons/io";
 import { MdGroups } from "react-icons/md";
 import { SlOptionsVertical } from "react-icons/sl";
-import { lazy } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import { roomData } from '@/store/room';
 
 const ShareDialog = lazy(() => import('@/components/room/ShareDialog'));
 const MembersDrawer = lazy(() => import('@/components/room/MembersDrawer'));
 const ChatDrawer = lazy(() => import('@/components/room/ChatDrawer'));
 const MoreOptions = lazy(() => import('@/components/room/MoreOptions'));
+const LeaveBlockerDialog = lazy(() => import('@/components/room/LeaveBlockerDialog'));
 
 export const Route = createFileRoute('/app/room/')({
     component: RouteComponent,
 })
 
 function RouteComponent() {
+    const [leavingRoom, setLeavingRoom] = useState(false);
+
+    useEffect(() => {
+        window.history.pushState(null, "", window.location.href);
+
+        const handlePopState = () => {
+            setLeavingRoom(true);
+            window.history.pushState(null, "", window.location.href);
+        };
+
+        window.addEventListener("popstate", handlePopState);
+
+        return () => {
+            window.removeEventListener("popstate", handlePopState);
+        };
+    }, []);
+
     return <div className='flex flex-col gap-5 bg-primary-surface p-5 h-screen'>
         {/*  */}
         <div className='text-primary-paragraph flex items-center justify-between'>
@@ -76,5 +94,8 @@ function RouteComponent() {
                 </MoreOptions>
             </div>
         </div>
+
+        {/* Blocks when a user try to leave room */}
+        <LeaveBlockerDialog open={leavingRoom} onOpenChange={setLeavingRoom} />
     </div>
 }
