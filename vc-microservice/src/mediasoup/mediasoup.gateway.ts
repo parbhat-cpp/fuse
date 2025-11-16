@@ -45,6 +45,8 @@ export class MediasoupGateway implements OnGatewayConnection, OnGatewayInit, OnG
 
     this.userIdToSocketId.set(userId, client.id);
 
+    this.logger.debug(`${name} ${client.id} connected`);
+
     if (!this.roomList.has(roomId)) {
       let worker = this.getMediasoupWorker();
       this.roomList.set(roomId, new Room(roomId, worker, client, this.userIdToSocketId));
@@ -63,10 +65,17 @@ export class MediasoupGateway implements OnGatewayConnection, OnGatewayInit, OnG
     const roomId = client.data.roomId;
     const userId = client.data.userId;
 
+    this.logger.debug(`${client.data.name} ${client.id} disconnected`);
+
     this.roomList.get(roomId)?.removePeer(
       userId,
     );
     this.userIdToSocketId.delete(userId);
+
+    if (this.roomList.get(roomId)?.isRoomEmpty()) {
+      this.logger.debug(`room deleted ${roomId}`);
+      this.roomList.delete(roomId);
+    }
   }
 
   async createWorkers() {
@@ -112,8 +121,10 @@ export class MediasoupGateway implements OnGatewayConnection, OnGatewayInit, OnG
   @SubscribeMessage('get-router-rtp-capabilities')
   getRouterRtpCapabilities(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
     try {
+      this.logger.debug(this.roomList.get(client.data.roomId)?.getRtpCapabilities());
       return this.roomList.get(client.data.roomId)?.getRtpCapabilities();
     } catch (error) {
+      this.logger.error(error);
       return { error: error.message };
     }
   }

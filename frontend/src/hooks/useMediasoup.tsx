@@ -55,6 +55,10 @@ const useMediasoup = (props: MediasoupHookProps) => {
         }
 
         setSocket(socketIo);
+
+        return () => {
+            socketIo.disconnect();
+        };
     }, []);
 
     useEffect(() => {
@@ -75,11 +79,13 @@ const useMediasoup = (props: MediasoupHookProps) => {
         });
 
         socket.on("new-producer", async (data) => {
-            await consume(data[0].producerId);
+            for (let { producerId } of data) {
+                await consume(producerId);
+            }
         });
 
         socket.on("disconnect", () => {
-            exit(true);
+            exit();
         });
 
         return () => {
@@ -217,7 +223,16 @@ const useMediasoup = (props: MediasoupHookProps) => {
 
                         case 'connected':
                             //remoteVideo.srcObject = await stream;
-                            //await socket.request('resume');
+                            await socket?.request('resume', consumer.id);
+                            setRemoteStreams((prev) => {
+                                let updatedRemoteStreams = prev;
+                                updatedRemoteStreams.forEach(({ id, kind, stream }, index) => {
+                                    if (consumer.id === id) {
+                                        updatedRemoteStreams[index] = { ...updatedRemoteStreams[index], kind, stream };
+                                    }
+                                });
+                                return updatedRemoteStreams;
+                            });
                             break
 
                         case 'failed':
@@ -248,26 +263,60 @@ const useMediasoup = (props: MediasoupHookProps) => {
 
         const consumerStream = await getConsumeStream(producerId);
 
-        const { consumer, kind, stream } = consumerStream!;
+        if (!consumerStream) {
+            console.error('❌ getConsumeStream returned null/undefined');
+            return;
+        }
+
+        const { consumer, kind, stream } = consumerStream;
 
         if (!consumer) return;
 
-        if (kind === 'video') {
-            setRemoteStreams((prev) => [
-                ...prev, {
-                    kind: 'video',
-                    stream: stream,
-                    id: consumer.id,
+        if (consumer.paused) {
+            console.log('⏸️ Consumer is paused, resuming...');
+
+            try {
+                // Resume locally first
+                consumer.resume();
+                console.log('✅ Consumer resumed locally');
+
+                // Then notify server
+                await socket?.request('resume', consumer.id);
+                console.log('✅ Consumer resumed on server');
+            } catch (error) {
+                console.error('❌ Failed to resume consumer:', error);
+
+                // Try alternative endpoint names
+                try {
+                    await socket?.request('resume-consumer', {
+                        consumerId: consumer.id
+                    });
+                    console.log('✅ Consumer resumed (alt method)');
+                } catch (err2) {
+                    console.error('❌ All resume methods failed');
                 }
-            ]);
+            }
         } else {
-            setRemoteStreams((prev) => [
-                ...prev, {
-                    kind: 'audio',
-                    stream: stream,
-                    id: consumer.id,
+            console.log('▶️ Consumer is already playing');
+        }
+
+        // Wait a moment for resume to take effect
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (kind === 'video') {
+            setRemoteStreams((prev) => {
+                if (prev.some(s => s.id === consumer.id)) {
+                    return prev;
                 }
-            ]);
+                return [...prev, { kind: 'video', stream: stream, id: consumer.id }];
+            });
+        } else {
+            setRemoteStreams((prev) => {
+                if (prev.some(s => s.id === consumer.id)) {
+                    return prev;
+                }
+                return [...prev, { kind: 'audio', stream: stream, id: consumer.id }];
+            });
         }
 
         consumer.on('trackended',
@@ -372,7 +421,11 @@ const useMediasoup = (props: MediasoupHookProps) => {
                 return;
         }
 
-        if (producerLabel.has(type)) return;
+        if (producerLabel.has(type)) {
+            console.log(`${producerLabel} ${type} exists`);
+
+            return
+        };
 
         let stream: MediaStream;
 
@@ -383,6 +436,35 @@ const useMediasoup = (props: MediasoupHookProps) => {
 
             const track = audio ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0];
             const params: Record<string, any> = { track };
+
+            if (!track) {
+                console.error('❌ No track found!');
+                toast.error(`No ${audio ? 'audio' : 'video'} track available`);
+                return;
+            }
+
+            console.log('Track details:', {
+                id: track.id,
+                kind: track.kind,
+                label: track.label,
+                enabled: track.enabled,
+                muted: track.muted,
+                readyState: track.readyState,
+                settings: track.getSettings()
+            });
+
+            if (!audio) {
+                const settings = track.getSettings();
+                console.log('Video track settings:', settings);
+
+                if (settings.width && settings.height) {
+                    console.log(`✅ Video dimensions: ${settings.width}x${settings.height}`);
+                } else {
+                    console.error('❌ Video track has no dimensions!');
+                    toast.error('Video track has no dimensions');
+                    return;
+                }
+            }
 
             if (!audio && !screen) {
                 params.encodings = [
@@ -411,10 +493,11 @@ const useMediasoup = (props: MediasoupHookProps) => {
 
             if (!producer) return;
 
-            setProducers((prev) => ({
-                ...prev,
-                [producer.id]: producer,
-            }));
+            setProducers((prev) => {
+                const newMap = new Map(prev);
+                newMap.set(producer.id, producer);
+                return newMap;
+            });
 
             if (audio) {
                 localAudioStreamRef.current = stream;
@@ -438,15 +521,17 @@ const useMediasoup = (props: MediasoupHookProps) => {
                 //     elem.parentNode.removeChild(elem)
                 // }
                 setProducers((prev) => {
-                    prev.delete(producer.id);
-                    return prev;
+                    const newMap = new Map(prev);
+                    newMap.delete(producer.id);
+                    return newMap;
                 });
             });
 
-            setProducerLabel((prev) => ({
-                ...prev,
-                [type]: producer.id,
-            }));
+            setProducerLabel((prev) => {
+                const newMap = new Map(prev);
+                newMap.set(type, producer.id);
+                return newMap;
+            });
 
             // switch (type) {
             //     case mediaType.audio:
@@ -462,7 +547,8 @@ const useMediasoup = (props: MediasoupHookProps) => {
             //         return
             // }
         } catch (error) {
-
+            console.error('❌ Error in produce:', error);
+            toast.error(`Failed to produce ${type}: ${(error as Error).message}`);
         }
     }
 
@@ -530,15 +616,24 @@ const useMediasoup = (props: MediasoupHookProps) => {
         });
     }
 
-    function exit(offline = false) {
+    function exit() {
         consumerTransportRef.current?.close();
         producerTransportRef.current?.close();
 
+        // setProducerLabel(new Map());
+        // setConsumers(new Map());
+        // setProducers(new Map());
+        // localVideoStreamRef.current = null;
+        // localAudioStreamRef.current = null;
+        // setRemoteStreams([]);
+        // deviceRef.current = null;
+
+        socket?.disconnect();
         socket?.request('exit-room');
     }
 
 
-    return { localVideoStreamRef, localAudioStreamRef, remoteStreams };
+    return { localVideoStreamRef, localAudioStreamRef, remoteStreams, exit };
 }
 
 export default useMediasoup;

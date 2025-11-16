@@ -40,7 +40,7 @@ function RouteComponent() {
 
     const localStreamRef = useRef<HTMLVideoElement>(null);
 
-    const { localVideoStreamRef, remoteStreams } = useMediasoup({
+    const { localVideoStreamRef, remoteStreams, exit } = useMediasoup({
         name: user['username'] ?? user['full_name'],
         roomId: roomData.state?.roomId,
         userId: user['id'],
@@ -82,6 +82,7 @@ function RouteComponent() {
 
         socket.on("leave-room", (_) => {
             roomData.setState(undefined);
+            exit();
             navigate({
                 to: "/app",
             });

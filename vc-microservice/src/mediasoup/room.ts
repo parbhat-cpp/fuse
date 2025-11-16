@@ -33,6 +33,7 @@ export class Room {
 
         this.io = io;
         this.userIdToSocketId = userIdToSocketId;
+        this.logger.debug(`router   \n${this.router}`);
     }
 
     addPeer(peer: Peer) {
@@ -173,5 +174,10 @@ export class Room {
             id: this.roomId,
             peers: JSON.stringify([...this.peers])
         }
+    }
+
+    isRoomEmpty() {
+        if (!Object.keys(this.peers).length) return true;
+        return false;
     }
 }
