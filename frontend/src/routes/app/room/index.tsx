@@ -10,13 +10,11 @@ import { ImPhoneHangUp } from "react-icons/im";
 import { IoMdChatbubbles } from "react-icons/io";
 import { MdGroups } from "react-icons/md";
 import { SlOptionsVertical } from "react-icons/sl";
-import { lazy, useEffect, useRef, useState } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import { roomData } from '@/store/room';
 import { useSocket } from '@/socket';
 import toast from 'react-hot-toast';
 import { useStore } from '@tanstack/react-store';
-import useMediasoup from '@/hooks/useMediasoup';
-import RemoteVideo from '@/components/room/RemoteVideo';
 
 const ShareDialog = lazy(() => import('@/components/room/ShareDialog'));
 const MembersDrawer = lazy(() => import('@/components/room/MembersDrawer'));
@@ -37,14 +35,6 @@ function RouteComponent() {
     const attendees = useStore(roomData, (s) => s?.attendees);
 
     const [leavingRoom, setLeavingRoom] = useState(false);
-
-    const localStreamRef = useRef<HTMLVideoElement>(null);
-
-    const { localVideoStreamRef, remoteStreams, exit } = useMediasoup({
-        name: user['username'] ?? user['full_name'],
-        roomId: roomData.state?.roomId,
-        userId: user['id'],
-    });
 
     useEffect(() => {
         window.history.pushState(null, "", window.location.href);
@@ -82,7 +72,6 @@ function RouteComponent() {
 
         socket.on("leave-room", (_) => {
             roomData.setState(undefined);
-            exit();
             navigate({
                 to: "/app",
             });
@@ -103,17 +92,6 @@ function RouteComponent() {
             socket.off("attendee-kicked");
         }
     }, [socket]);
-
-    useEffect(() => {
-        if (localStreamRef.current && localVideoStreamRef.current) {
-            localStreamRef.current.id = localVideoStreamRef.current.id;
-            localStreamRef.current.srcObject = localVideoStreamRef.current;
-            console.log(localVideoStreamRef.current);
-            localStreamRef.current.play().catch(err => {
-                console.error('Error playing video:', err);
-            });
-        }
-    }, [localVideoStreamRef.current]);
 
     return <div className='flex flex-col gap-5 bg-primary-surface p-5 h-screen'>
         {/*  */}
@@ -139,22 +117,7 @@ function RouteComponent() {
         </div>
         {/* member's video */}
         <div className='flex-1 bg-red-100 rounded-lg'>
-            {
-                localVideoStreamRef &&
-                <video
-                    ref={localStreamRef}
-                    height={200}
-                    width={350}
-                    autoPlay
-                    muted
-                    playsInline
-                />
-            }
-            {
-                remoteStreams && remoteStreams.map(remoteStream => (
-                    <RemoteVideo key={remoteStream.id} remoteStream={{ id: remoteStream.id, kind: remoteStream.kind, stream: remoteStream.stream }} />
-                ))
-            }
+            
         </div>
         {/* bottom bar */}
         <div className='grid lg:grid-cols-3 grid-cols-1 items-center'>
