@@ -8,6 +8,7 @@ export enum RoomEvents {
     ENTER_ROOM = 'enter-room',
     NEW_ATTENDEE = 'new-attendee',
     ROOM_NOT_FOUND = 'room-not-found',
+    NOT_MEMBER = 'not-member',
     LEAVE_ROOM = 'leave-room',
     ATTENDEE_LEFT = 'attendee-left',
     ATTENDEE_KICKED = 'attendee-kicked',
@@ -15,4 +16,17 @@ export enum RoomEvents {
     EXIT_ROOM = 'exit-room',
     REMOVE_ATTENDEE = 'remove-attendee',
     SEND_MESSAGE = 'send-message',
+    SET_ACTIVITY = 'set-activity',
+    LOAD_ACTIVITY = 'load-activity',
+};
+
+export enum YTEvents {
+    SET_VIDEO = 'set-video',
+    SET_VIDEO_ID = 'set-video-id',
+    PAUSE_VIDEO = 'pause-video',
+    SET_VIDEO_PAUSE = 'set-video-pause',
+    PLAY_VIDEO = 'play-video',
+    SET_VIDEO_PLAY = 'set-video-play',
+    SEEK_VIDEO = 'seek-video',
+    SEEK_VIDEO_TO = 'seek-to-video',
 };

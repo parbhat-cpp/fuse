@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsDate, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsDate, IsNotEmpty, IsNumber, IsObject, IsString } from "class-validator";
 import { UserType } from "src/user/entities/user.entity";
 
 export class Room {
@@ -29,4 +29,10 @@ export class Room {
     
     @IsDate()
     startAt?: Date;
+
+    @IsString()
+    currentActivityId: string | undefined;
+
+    @IsObject()
+    currentActivityData: Record<string, any> | undefined;
 }

@@ -1,7 +1,7 @@
 import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, OnGatewayConnection, OnGatewayDisconnect, WebSocketServer, OnGatewayInit, WsException } from '@nestjs/websockets';
 import { RedisService } from 'src/redis/redis.service';
 import { RoomsService } from './rooms.service';
-import { RoomEvents } from './events';
+import { RoomEvents, YTEvents } from './events';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -9,6 +9,7 @@ import { JoinRoomDto } from './dto/join-room.dto';
 import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
 import { ChatDto } from './dto/chat.dto';
 import { JwtService } from '@nestjs/jwt';
+import { YtService } from './yt/yt.service';
 
 @WebSocketGateway({
   namespace: "/room",
@@ -26,6 +27,7 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
     private jwtService: JwtService,
     private readonly redisService: RedisService,
     private readonly roomsService: RoomsService,
+    private readonly ytService: YtService,
   ) { }
 
   afterInit(server: Server) {
@@ -45,7 +47,7 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
         this.redisService.redis.hset(`user:${user.sub}`, { socketId: socket.id });
 
         socket.data.userId = user.sub;
-        socket['userId'] = user.sub;
+        socket.data.userName = user.username ?? user.full_name;
 
         next();
       } catch (error) {
@@ -96,5 +98,61 @@ export class RoomsGateway implements OnGatewayConnection, OnGatewayInit, OnGatew
   @SubscribeMessage(RoomEvents.SEND_MESSAGE)
   async sendMessage(@ConnectedSocket() client: Socket, @MessageBody() payload: ChatDto) {
     await this.roomsService.sendMessage(client, payload, this.userIdToSocketId);
+  }
+
+  @SubscribeMessage(RoomEvents.SET_ACTIVITY)
+  async setActivity(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() {
+      roomId,
+      activityId
+    }: {
+      roomId: string;
+      activityId: string;
+    }) {
+    await this.roomsService.setActivity(client, roomId, activityId, this.userIdToSocketId);
+  }
+
+  /**
+   * ACTIVITIES EVENTS
+  */
+
+  /**
+   * YouTube Activity
+   */
+  @SubscribeMessage(YTEvents.SET_VIDEO)
+  async setVideo(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() {
+      roomId,
+      videoId,
+    }: {
+      roomId: string;
+      videoId: string;
+    }) {
+    await this.ytService.setVideo(client, roomId, videoId, this.userIdToSocketId);
+  }
+
+  @SubscribeMessage(YTEvents.PAUSE_VIDEO)
+  async playVideo(@ConnectedSocket() client: Socket, @MessageBody() roomId: string) {
+    await this.ytService.playVideo(client, roomId, this.userIdToSocketId);
+  }
+
+  @SubscribeMessage(YTEvents.PAUSE_VIDEO)
+  async pauseVideo(@ConnectedSocket() client: Socket, @MessageBody() roomId: string) {
+    await this.ytService.pauseVideo(client, roomId, this.userIdToSocketId);
+  }
+
+  @SubscribeMessage(YTEvents.SEEK_VIDEO)
+  async seekVideo(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() {
+      roomId,
+      position,
+    }: {
+      roomId: string;
+      position: string;
+    }) {
+    await this.ytService.seekVideo(client, roomId, position, this.userIdToSocketId);
   }
 }

@@ -1,12 +1,5 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { IoMdVideocam } from "react-icons/io";
-import { IoVideocamOff } from "react-icons/io5";
-import { FaMicrophone } from "react-icons/fa";
-import { FaMicrophoneSlash } from "react-icons/fa";
-import { MdOutlineScreenShare } from "react-icons/md";
-import { MdOutlineStopScreenShare } from "react-icons/md";
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { IoShareSocial } from "react-icons/io5";
-import { ImPhoneHangUp } from "react-icons/im";
 import { IoMdChatbubbles } from "react-icons/io";
 import { MdGroups } from "react-icons/md";
 import { SlOptionsVertical } from "react-icons/sl";
@@ -15,6 +8,7 @@ import { roomData } from '@/store/room';
 import { useSocket } from '@/socket';
 import toast from 'react-hot-toast';
 import { useStore } from '@tanstack/react-store';
+import AcitivitySelectNPlay from '@/components/room/RoomActivity/AcitivitySelectNPlay';
 
 const ShareDialog = lazy(() => import('@/components/room/ShareDialog'));
 const MembersDrawer = lazy(() => import('@/components/room/MembersDrawer'));
@@ -100,7 +94,7 @@ function RouteComponent() {
                 {roomData.state?.roomName}
             </h3>
             <div className='flex gap-4 items-center'>
-                <div className='lg:hidden block flex gap-4 items-center'>
+                <div className='lg:hidden flex gap-4 items-center'>
                     <MembersDrawer admin={roomData.state?.admin} members={attendees}>
                         <MdGroups size={34} />
                     </MembersDrawer>
@@ -115,36 +109,20 @@ function RouteComponent() {
                 </ShareDialog>
             </div>
         </div>
-        {/* member's video */}
-        <div className='flex-1 bg-red-100 rounded-lg'>
-            
+        <div className='flex-1 bg-red-100 rounded-lg overflow-y-auto'>
+            <AcitivitySelectNPlay />
         </div>
         {/* bottom bar */}
-        <div className='grid lg:grid-cols-3 grid-cols-1 items-center'>
-            <div className='lg:col-start-2'>
-                <div className='flex gap-5 justify-evenly p-3 rounded-lg bg-primary-background text-primary-paragraph'>
-                    <IoMdVideocam size={25} />
-                    <FaMicrophone size={25} />
-                    <MdOutlineScreenShare size={25} />
-                    <ImPhoneHangUp size={25} />
-                    <div className='lg:hidden block'>
-                        <MoreOptions>
-                            <SlOptionsVertical size={20} />
-                        </MoreOptions>
-                    </div>
-                </div>
-            </div>
-            <div className='lg:flex hidden gap-5 items-center place-self-end px-4 text-primary-paragraph'>
-                <MembersDrawer admin={roomData.state?.admin} members={attendees}>
-                    <MdGroups size={34} />
-                </MembersDrawer>
-                <ChatDrawer>
-                    <IoMdChatbubbles size={25} />
-                </ChatDrawer>
-                <MoreOptions>
-                    <SlOptionsVertical size={20} />
-                </MoreOptions>
-            </div>
+        <div className='lg:flex hidden gap-5 items-center place-self-end px-4 text-primary-paragraph'>
+            <MembersDrawer admin={roomData.state?.admin} members={attendees}>
+                <MdGroups size={34} />
+            </MembersDrawer>
+            <ChatDrawer>
+                <IoMdChatbubbles size={25} />
+            </ChatDrawer>
+            <MoreOptions>
+                <SlOptionsVertical size={20} />
+            </MoreOptions>
         </div>
 
         {/* Blocks when a user try to leave room */}

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { canJoinRoom, roomJoinLink, toLocalDate } from '@/lib/utils';
 import { useSocket } from '@/socket';
-import { roomData } from '@/store/room';
+import { roomActivities, roomData } from '@/store/room';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -28,7 +28,9 @@ function RouteComponent() {
         if (!socket) return;
 
         socket?.on("room-created", (data) => {
-            roomData.setState(() => data);
+            roomData.setState(() => data['roomData']);
+            roomActivities.setState(() => data['roomActivities']);
+
             navigate({
                 to: '/app/room',
             });
@@ -56,7 +58,8 @@ function RouteComponent() {
                     startAt: data['startAt'],
                 });
             } else {
-                roomData.setState(() => data);
+                roomData.setState(() => data['roomData']);
+                roomActivities.setState(() => data['roomActivities']);
                 navigate({
                     to: '/app/room',
                 });

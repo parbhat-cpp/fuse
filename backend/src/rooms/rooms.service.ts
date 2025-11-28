@@ -11,12 +11,50 @@ import { Room } from './dto/room.dto';
 import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
 import { ChatDto } from './dto/chat.dto';
 import { UserType } from 'src/user/entities/user.entity';
+import { roomActivities } from './config';
 
 @Injectable()
 export class RoomsService {
     constructor(
         private readonly redisService: RedisService,
     ) { }
+
+    async roomExists(roomId: string, userId: string) {
+        const publicRoomExists = await this.redisService.redis.hexists(
+            `${RoomType.PUBLIC}:${roomId}`,
+            "roomId",
+        );
+
+        const privateRoomExists = await this.redisService.redis.hexists(
+            `${RoomType.PRIVATE}:${roomId}`,
+            "roomId",
+        );
+
+        if (publicRoomExists || privateRoomExists) {
+            let roomType = '';
+
+            if (publicRoomExists) {
+                roomType = RoomType.PUBLIC;
+            }
+
+            if (privateRoomExists) {
+                roomType = RoomType.PRIVATE;
+            }
+
+            const roomData = await this.redisService.redis.hgetall(
+                `${roomType}:${roomId}`,
+            );
+
+            const roomDataJson: Room = unformatRoomData(roomData);
+
+            if (roomDataJson.attendeesId.includes(userId))
+                return { exists: true, isMember: true, roomData: roomDataJson, roomType };
+            else
+                return { exists: true, isMember: false, roomData: undefined, roomType };
+        }
+
+        return { exists: false, isMember: false, roomData: undefined, roomType: undefined };
+    }
 
     async createRoom(client: Socket, payload: CreateRoomDto) {
         payload.roomId = payload?.roomId ?? randomUUID().substring(0, 5);
@@ -60,7 +98,10 @@ export class RoomsService {
                 startAt: resData.startAt,
             });
         else
-            client.emit(RoomEvents.ROOM_CREATED, resData);
+            client.emit(RoomEvents.ROOM_CREATED, {
+                roomData: resData,
+                roomActivities,
+            });
     }
 
     async joinRoom(client: Socket, payload: JoinRoomDto, userIdToSocketId: Map<string, string>) {
@@ -114,7 +155,10 @@ export class RoomsService {
 
             await this.redisService.redis.hset(`${roomType}:${roomId}`, formatRoomData(roomDataJson));
 
-            client.emit(RoomEvents.ENTER_ROOM, roomDataJson);
+            client.emit(RoomEvents.ENTER_ROOM, {
+                roomData: roomDataJson,
+                roomActivities,
+            });
 
             for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
                 const receiverId = userIdToSocketId.get(roomDataJson.attendeesId[i]);
@@ -318,6 +362,29 @@ export class RoomsService {
             }
         } else {
             client.emit(RoomEvents.ROOM_NOT_FOUND);
+        }
+    }
+
+    async setActivity(client: Socket, roomId: string, activityId: string, userIdToSocketId: Map<string, string>) {
+        const userId = client.data.userId;
+        const username = client.data.userName;
+
+        const { exists, isMember, roomData, roomType } = await this.roomExists(roomId, userId);
+
+        if (!exists)
+            client.emit(RoomEvents.ROOM_NOT_FOUND);
+
+        if (!isMember)
+            client.emit(RoomEvents.NOT_MEMBER);
+
+        roomData.currentActivityId = activityId;
+        roomData.currentActivityData = {};
+
+        await this.redisService.redis.hset(`${roomType}:${roomId}`, formatRoomData(roomData));
+
+        for (let i = 0; i < roomData.attendeesId.length; i++) {
+            const attendeeId = roomData.attendeesId[i];
+            client.to(userIdToSocketId.get(attendeeId)).emit(RoomEvents.SET_ACTIVITY, { username, activityId });
         }
     }
 }
