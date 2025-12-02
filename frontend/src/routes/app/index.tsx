@@ -1,5 +1,8 @@
 "use client";
 
+import toast from 'react-hot-toast';
+import { useEffect, useState } from 'react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import InputWithCopy from '@/components/common/InputWithCopy';
 import Create from '@/components/forms/room/Create';
 import Join from '@/components/forms/room/Join';
@@ -7,10 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { canJoinRoom, roomJoinLink, toLocalDate } from '@/lib/utils';
 import { useSocket } from '@/socket';
-import { roomActivities, roomData } from '@/store/room';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import { currentRoomActivity, roomActivities, roomData } from '@/store/room';
 
 export const Route = createFileRoute('/app/')({
     component: RouteComponent,
@@ -27,7 +27,7 @@ function RouteComponent() {
     useEffect(() => {
         if (!socket) return;
 
-        socket?.on("room-created", (data) => {
+        socket.on("room-created", (data) => {
             roomData.setState(() => data['roomData']);
             roomActivities.setState(() => data['roomActivities']);
 
@@ -36,7 +36,7 @@ function RouteComponent() {
             });
         });
 
-        socket?.on("room-scheduled", (data) => {
+        socket.on("room-scheduled", (data) => {
             setScheduledRoomData(data);
             setOpenRoomScheduledDialog(true);
         });
@@ -60,6 +60,7 @@ function RouteComponent() {
             } else {
                 roomData.setState(() => data['roomData']);
                 roomActivities.setState(() => data['roomActivities']);
+                currentRoomActivity.setState(() => data['roomData']['currentActivityData'])
                 navigate({
                     to: '/app/room',
                 });
