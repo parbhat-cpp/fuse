@@ -1,38 +1,46 @@
-import { IsArray, IsBoolean, IsDate, IsNotEmpty, IsNumber, IsObject, IsString } from "class-validator";
-import { UserType } from "src/user/entities/user.entity";
+import {
+  IsArray,
+  IsBoolean,
+  IsDate,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsString,
+} from 'class-validator';
+import { UserType } from 'src/user/entities/user.entity';
 
 export class Room {
-    @IsString()
-    roomId?: string;
+  @IsString()
+  roomId?: string;
 
-    @IsNotEmpty()
-    @IsString()
-    roomName: string;
+  @IsNotEmpty()
+  @IsString()
+  roomName: string;
 
-    @IsNotEmpty()
-    admin: UserType;
+  @IsNotEmpty()
+  admin: UserType;
 
-    @IsBoolean()
-    isPublic: boolean;
+  @IsBoolean()
+  isPublic: boolean;
 
-    @IsNumber()
-    attendeesCount?: number;
+  @IsNumber()
+  attendeesCount?: number;
 
-    @IsArray()
-    attendees?: Array<UserType>;
+  @IsArray()
+  attendees?: Array<UserType>;
 
-    @IsArray()
-    attendeesId?: Array<string>;
+  @IsArray()
+  attendeesId?: Array<string>;
 
-    @IsDate()
-    createdAt?: Date;
-    
-    @IsDate()
-    startAt?: Date;
+  @IsDate()
+  createdAt?: Date;
 
-    @IsString()
-    currentActivityId: string | undefined;
+  @IsDate()
+  startAt?: Date;
 
-    @IsObject()
-    currentActivityData: Record<string, any> | undefined;
+  @IsString()
+  currentActivityId: string | undefined;
+
+  @IsObject()
+  currentActivityData: Record<string, any> | undefined;
 }

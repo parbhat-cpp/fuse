@@ -20,6 +20,7 @@ import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
 import { ChatDto } from './dto/chat.dto';
 import { JwtService } from '@nestjs/jwt';
 import { YtService } from './yt/yt.service';
+import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service';
 
 @WebSocketGateway({
   namespace: '/room',
@@ -36,13 +37,15 @@ export class RoomsGateway
   private userIdToSocketId: Map<string, string> = new Map();
 
   constructor(
+    private readonly roomSchedulerService: RoomSchedulerService,
     private jwtService: JwtService,
     private readonly redisService: RedisService,
     private readonly roomsService: RoomsService,
     private readonly ytService: YtService,
   ) {}
 
-  afterInit(server: Server) {
+  async afterInit(server: Server) {
+    // handle socket connection
     server.use(async (socket: Socket, next) => {
       try {
         const token =
@@ -70,6 +73,43 @@ export class RoomsGateway
         Logger.error(error);
       }
     });
+
+    const sub = this.redisService.redis.duplicate();
+    // handle room activation
+    try {
+      await sub.subscribe('room:activate');
+      sub.on('message', async (channel, message) => {
+        const { roomId } = JSON.parse(message);
+        await this.roomSchedulerService.activateRoom(roomId);
+      });
+    } catch (error) {
+      Logger.error(error);
+    }
+
+    // handle room termination
+    try {
+      await sub.subscribe('room:terminate');
+      sub.on('message', async (channel, message) => {
+        const { roomId } = JSON.parse(message);
+        await this.roomSchedulerService.terminateRoom(roomId);
+
+        const { exists, roomData } = await this.roomsService.roomExists(
+          roomId,
+          '',
+        );
+
+        if (exists) {
+          for (let i = 0; i < roomData.attendeesId.length; i++) {
+            const socketId = this.userIdToSocketId.get(roomData.attendeesId[i]);
+            if (socketId) {
+              this.server.to(socketId).emit(RoomEvents.ROOM_TERMINATED);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      Logger.error(error);
+    }
   }
 
   handleConnection(@ConnectedSocket() client: Socket) {

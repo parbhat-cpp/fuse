@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RoomsModule } from './rooms/rooms.module';
+import { RoomSchedulerModule } from './room-scheduler/room-scheduler.module';
 import 'dotenv/config';
 
 @Module({
@@ -23,8 +24,9 @@ import 'dotenv/config';
       signOptions: { expiresIn: '60s' },
     }),
     RoomsModule,
+    RoomSchedulerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

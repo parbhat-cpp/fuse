@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { RedisService } from 'src/redis/redis.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -12,10 +12,14 @@ import { RemoveAttendeeDto } from './dto/remove-attendee.dto';
 import { ChatDto } from './dto/chat.dto';
 import { UserType } from 'src/user/entities/user.entity';
 import { roomActivities } from './config';
+import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly redisService: RedisService) {}
+  constructor(
+    private readonly roomSchedulerService: RoomSchedulerService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async roomExists(roomId: string, userId: string) {
     const publicRoomExists = await this.redisService.redis.hexists(
@@ -53,7 +57,12 @@ export class RoomsService {
           roomType,
         };
       else
-        return { exists: true, isMember: false, roomData: undefined, roomType };
+        return {
+          exists: true,
+          isMember: false,
+          roomData: roomDataJson,
+          roomType,
+        };
     }
 
     return {
@@ -91,6 +100,18 @@ export class RoomsService {
 
     const roomData = formatRoomData(payload);
 
+    const resData = unformatRoomData(roomData);
+
+    if (scheduleRoom) {
+      await this.roomSchedulerService.scheduleRoom(roomId, resData);
+      client.emit(RoomEvents.ROOM_SCHEDULED, {
+        roomName: resData.roomName,
+        roomId: resData.roomId,
+        startAt: resData.startAt,
+      });
+      return;
+    }
+
     if (payload.isPublic) {
       await this.redisService.redis.hset(
         `${RoomType.PUBLIC}:${roomId}`,
@@ -103,19 +124,15 @@ export class RoomsService {
       );
     }
 
-    const resData = unformatRoomData(roomData);
-
-    if (scheduleRoom)
-      client.emit(RoomEvents.ROOM_SCHEDULED, {
-        roomName: resData.roomName,
-        roomId: resData.roomId,
-        startAt: resData.startAt,
-      });
-    else
-      client.emit(RoomEvents.ROOM_CREATED, {
-        roomData: resData,
-        roomActivities,
-      });
+    // client.emit(RoomEvents.ROOM_SCHEDULED, {
+    //   roomName: resData.roomName,
+    //   roomId: resData.roomId,
+    //   startAt: resData.startAt,
+    // });
+    client.emit(RoomEvents.ROOM_CREATED, {
+      roomData: resData,
+      roomActivities,
+    });
   }
 
   async joinRoom(
@@ -129,6 +146,16 @@ export class RoomsService {
 
     if (!roomId) {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
+      return;
+    }
+
+    const { isActive, delay } =
+      await this.roomSchedulerService.isRoomActive(roomId);
+
+    Logger.log({ isActive, delay });
+
+    if (!isActive) {
+      client.emit(RoomEvents.ROOM_SCHEDULED, { delay });
       return;
     }
 
@@ -157,7 +184,11 @@ export class RoomsService {
         `${roomType}:${roomId}`,
       );
 
+      Logger.log(`${typeof roomData}`);
+
       const roomDataJson: Room = unformatRoomData(roomData);
+
+      Logger.log(`${JSON.stringify(roomDataJson)}`);
 
       if (
         !roomDataJson.admin.premium_account &&

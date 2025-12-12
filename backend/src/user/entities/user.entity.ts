@@ -39,13 +39,13 @@ export class User {
   email: string;
 
   @Column({
-    type: "timestamptz",
+    type: 'timestamptz',
     default: new Date(),
   })
   created_at: string;
 
   @Column({
-    type: "timestamptz",
+    type: 'timestamptz',
     default: new Date(),
   })
   updated_at: string;
