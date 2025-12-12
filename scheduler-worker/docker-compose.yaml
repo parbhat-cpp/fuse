@@ -1,0 +1,15 @@
+services:
+  scheduler:
+    container_name: scheduler-worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env
+    networks:
+      - backend_fuse-network
+networks:
+  backend_fuse-network:
+    external: true
