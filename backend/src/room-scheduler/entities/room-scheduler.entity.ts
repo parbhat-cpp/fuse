@@ -1,6 +1,6 @@
 import { UUID } from 'node:crypto';
 import { User, UserType } from 'src/user/entities/user.entity';
-import { Column, Entity, PrimaryColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity({ name: 'room_scheduler' })
 export class RoomScheduler {
@@ -12,7 +12,11 @@ export class RoomScheduler {
   id: UUID;
 
   @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn({ name: 'user_id' })
   admin: UserType;
+
+  @Column()
+  user_id: UUID;
 
   @Column()
   isPublic: boolean;

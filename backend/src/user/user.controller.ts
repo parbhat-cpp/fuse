@@ -9,11 +9,13 @@ import {
   ParseUUIDPipe,
   BadRequestException,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UUID } from 'node:crypto';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { Request } from 'express';
 
 @Controller('user')
 export class UserController {
@@ -27,22 +29,28 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch()
   @UseGuards(AuthGuard)
   update(
-    @Param('id', ParseUUIDPipe) id: UUID,
+    @Req() request: Request,
     @Body(new ValidationPipe()) updateUserDto: UpdateUserDto,
   ) {
-    if (!id) throw new BadRequestException('Provide user id to update user');
+    const userId = request['user'].sub;
 
-    return this.userService.update(id, updateUserDto);
+    if (!userId)
+      throw new BadRequestException('Provide user id to update user');
+
+    return this.userService.update(userId, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete()
   @UseGuards(AuthGuard)
-  remove(@Param('id', ParseUUIDPipe) id: UUID) {
-    if (!id) throw new BadRequestException('Provide user id to delete user');
+  remove(@Req() request: Request) {
+    const userId = request['user'].sub;
 
-    return this.userService.remove(id);
+    if (!userId)
+      throw new BadRequestException('Provide user id to delete user');
+
+    return this.userService.remove(userId);
   }
 }
