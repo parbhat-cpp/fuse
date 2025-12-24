@@ -14,7 +14,7 @@ import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
 
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast'
 
 interface MyRouterContext {
   queryClient: QueryClient

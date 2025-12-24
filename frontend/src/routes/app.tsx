@@ -21,10 +21,12 @@ function RouteComponent() {
   const currentPath = routerState.location.pathname
 
   useEffect(() => {
-    ROUTES_NO_SIDEBAR.forEach((route) => {
-      if (currentPath.includes(route)) setHideSidebar(true)
-    })
-  }, [])
+    if (ROUTES_NO_SIDEBAR.includes(currentPath)) {
+      setHideSidebar(true)
+    } else {
+      setHideSidebar(false)
+    }
+  }, [currentPath])
 
   return (
     <SocketProvider
