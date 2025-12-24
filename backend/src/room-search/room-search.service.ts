@@ -30,7 +30,7 @@ export class RoomSearchService {
       'MATCH',
       matchPattern,
       'COUNT',
-      10,
+      5,
     );
 
     const rooms = [];
@@ -61,15 +61,6 @@ export class RoomSearchService {
       order: {
         start_at: 'ASC',
       },
-      // select: [
-      //   'id',
-      //   'isPublic',
-      //   'roomId',
-      //   'roomName',
-      //   'created_at',
-      //   'status',
-      //   'start_at',
-      // ],
       take: 10,
       skip: page * 10,
     });

@@ -17,7 +17,7 @@ export class RoomSearchController {
   constructor(private readonly roomSearchService: RoomSearchService) {}
 
   @UseGuards(AuthGuard)
-  @Get()
+  @Get('public')
   async searchRooms(
     @Req() request: Request,
     @Query('q') query?: string,
