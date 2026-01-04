@@ -99,7 +99,7 @@ export class RoomSchedulerService {
       formatRoomData(roomData),
     );
 
-    const delay = 2 * 60 * 1000; // room will be active for 2 minutes
+    const delay = 45 * 60 * 1000; // room will be active for 45 minutes
 
     await this.queue.add(
       'room:terminate',
