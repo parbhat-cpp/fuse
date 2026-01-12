@@ -13,7 +13,7 @@ import (
 
 const createSubscriptionUsage = `-- name: CreateSubscriptionUsage :one
 INSERT INTO subscription_usage (user_id, valid_from, valid_until, usage)
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4::text::jsonb)
 RETURNING (id, subscription_id, valid_from, valid_until)
 `
 
@@ -21,7 +21,7 @@ type CreateSubscriptionUsageParams struct {
 	UserID     pgtype.UUID
 	ValidFrom  pgtype.Timestamptz
 	ValidUntil pgtype.Timestamptz
-	Usage      []byte
+	Column4    string
 }
 
 func (q *Queries) CreateSubscriptionUsage(ctx context.Context, arg CreateSubscriptionUsageParams) (interface{}, error) {
@@ -29,7 +29,7 @@ func (q *Queries) CreateSubscriptionUsage(ctx context.Context, arg CreateSubscri
 		arg.UserID,
 		arg.ValidFrom,
 		arg.ValidUntil,
-		arg.Usage,
+		arg.Column4,
 	)
 	var column_1 interface{}
 	err := row.Scan(&column_1)
@@ -102,19 +102,19 @@ func (q *Queries) GetSubscriptionUsageByID(ctx context.Context, userID pgtype.UU
 }
 
 const updateSubscriptionUsage = `-- name: UpdateSubscriptionUsage :one
-UPDATE subscription_usage SET usage = $3
-WHERE subscription_id = $1 AND user_id = $2
+UPDATE subscription_usage SET usage = $3::text::jsonb
+WHERE id = $1 AND user_id = $2
 RETURNING (id, subscription_id, valid_from, valid_until, usage)
 `
 
 type UpdateSubscriptionUsageParams struct {
-	SubscriptionID pgtype.UUID
-	UserID         pgtype.UUID
-	Usage          []byte
+	ID      pgtype.UUID
+	UserID  pgtype.UUID
+	Column3 string
 }
 
 func (q *Queries) UpdateSubscriptionUsage(ctx context.Context, arg UpdateSubscriptionUsageParams) (interface{}, error) {
-	row := q.db.QueryRow(ctx, updateSubscriptionUsage, arg.SubscriptionID, arg.UserID, arg.Usage)
+	row := q.db.QueryRow(ctx, updateSubscriptionUsage, arg.ID, arg.UserID, arg.Column3)
 	var column_1 interface{}
 	err := row.Scan(&column_1)
 	return column_1, err

@@ -1,6 +1,6 @@
 -- name: CreateSubscriptionUsage :one
 INSERT INTO subscription_usage (user_id, valid_from, valid_until, usage)
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4::text::jsonb)
 RETURNING (id, subscription_id, valid_from, valid_until);
 
 -- name: GetSubscriptionUsageByID :one
@@ -17,6 +17,6 @@ WHERE subscription_id = $1 AND user_id = $2
 RETURNING (id, subscription_id, valid_from, valid_until, usage);
 
 -- name: UpdateSubscriptionUsage :one
-UPDATE subscription_usage SET usage = $3
-WHERE subscription_id = $1 AND user_id = $2
+UPDATE subscription_usage SET usage = $3::text::jsonb
+WHERE id = $1 AND user_id = $2
 RETURNING (id, subscription_id, valid_from, valid_until, usage);

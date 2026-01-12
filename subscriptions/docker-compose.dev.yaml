@@ -1,0 +1,20 @@
+services:
+  subscriptions:
+    container_name: subscriptions-microservice-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      GO_ENV: development
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/tmp
+    networks:
+      - backend_fuse-network
+networks:
+  backend_fuse-network:
+    external: true

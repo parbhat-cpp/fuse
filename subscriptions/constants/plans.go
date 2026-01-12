@@ -14,7 +14,7 @@ type Plan struct {
 	Price        float64 // in INR
 	ValidMonths  int
 	Features     []string
-	FeaturesJson map[string]any
+	FeaturesJson map[string]int
 }
 
 func GetPlans() map[string]Plan {
@@ -28,7 +28,7 @@ func GetPlans() map[string]Plan {
 			Price:        0,
 			ValidMonths:  -1, // forever
 			Features:     []string{"Feature 1", "Feature 2"},
-			FeaturesJson: map[string]any{"room_duration": 45, "room_schedule_limit": 3, "public_room_join_limit": 5},
+			FeaturesJson: map[string]int{"room_duration": 45, "room_schedule_limit": 3, "public_room_join_limit": 5},
 		},
 		"basic": {
 			ID:           cfg.SUBSCRIPTION_PLANS_ID["basic"],
@@ -37,7 +37,7 @@ func GetPlans() map[string]Plan {
 			Price:        149,
 			ValidMonths:  1,
 			Features:     []string{"Feature 1", "Feature 2", "Feature 3"},
-			FeaturesJson: map[string]any{"room_duration": 75, "room_schedule_limit": 10, "public_room_join_limit": 25},
+			FeaturesJson: map[string]int{"room_duration": 75, "room_schedule_limit": 10, "public_room_join_limit": 25},
 		},
 		"pro": {
 			ID:           cfg.SUBSCRIPTION_PLANS_ID["pro"],
@@ -46,7 +46,7 @@ func GetPlans() map[string]Plan {
 			Price:        399,
 			ValidMonths:  1,
 			Features:     []string{"Feature 1", "Feature 2", "Feature 3"},
-			FeaturesJson: map[string]any{"room_duration": 120, "room_schedule_limit": 20, "public_room_join_limit": -1},
+			FeaturesJson: map[string]int{"room_duration": 120, "room_schedule_limit": 20, "public_room_join_limit": -1},
 		},
 	}
 

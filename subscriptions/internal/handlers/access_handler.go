@@ -40,7 +40,9 @@ func (h *AccessHandler) HandleAccessRequest(ctx echo.Context) error {
 	res, err := h.s.HandleAccessRequest(user_id, access_request)
 
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"error": err.Error(),
+		})
 	}
-	return ctx.JSON(http.StatusAccepted, res)
+	return ctx.JSON(http.StatusOK, res)
 }

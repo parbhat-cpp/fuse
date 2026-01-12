@@ -8,8 +8,8 @@ import (
 
 type Config struct {
 	DB_URL string
-
 	SUBSCRIPTION_PLANS_ID map[string]uuid.UUID
+	PORT   string
 }
 
 func LoadEnv() *Config {
@@ -21,5 +21,7 @@ func LoadEnv() *Config {
 			"basic": uuid.MustParse(os.Getenv("BASIC_PLAN_ID")),
 			"pro":   uuid.MustParse(os.Getenv("PRO_PLAN_ID")),
 		},
+
+		PORT:   os.Getenv("PORT"),
 	}
 }
