@@ -8,13 +8,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Refund struct {
+	ID                pgtype.UUID
+	SubscriptionID    pgtype.UUID
+	UserID            pgtype.UUID
+	RazorpayPaymentID string
+	Amount            pgtype.Numeric
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
 type Subscription struct {
 	ID                pgtype.UUID
 	UserID            pgtype.UUID
 	PlanID            pgtype.UUID
 	PlanType          string
 	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
 	ValidUntil        pgtype.Timestamptz
+	OrderID           string
 	RazorpayPaymentID string
 	RazorpayOrderID   string
 	RazorpaySignature string

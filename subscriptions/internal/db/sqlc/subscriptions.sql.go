@@ -12,9 +12,9 @@ import (
 )
 
 const createSubscription = `-- name: CreateSubscription :one
-INSERT INTO subscriptions (user_id, plan_id, plan_type, purchase_date, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING (id, plan_id, plan_type, purchase_date, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature)
+INSERT INTO subscriptions (user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING (id, plan_id, plan_type, purchase_date, valid_from, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature)
 `
 
 type CreateSubscriptionParams struct {
@@ -22,6 +22,8 @@ type CreateSubscriptionParams struct {
 	PlanID            pgtype.UUID
 	PlanType          string
 	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
 	ValidUntil        pgtype.Timestamptz
 	RazorpayPaymentID string
 	RazorpayOrderID   string
@@ -34,6 +36,8 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 		arg.PlanID,
 		arg.PlanType,
 		arg.PurchaseDate,
+		arg.ValidFrom,
+		arg.OrderID,
 		arg.ValidUntil,
 		arg.RazorpayPaymentID,
 		arg.RazorpayOrderID,
@@ -45,7 +49,7 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 }
 
 const getAllSubscriptions = `-- name: GetAllSubscriptions :many
-SELECT id, user_id, plan_id, plan_type, purchase_date, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
+SELECT id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
 FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC
 `
 
@@ -55,6 +59,8 @@ type GetAllSubscriptionsRow struct {
 	PlanID            pgtype.UUID
 	PlanType          string
 	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
 	ValidUntil        pgtype.Timestamptz
 	RazorpayPaymentID string
 	RazorpayOrderID   string
@@ -76,6 +82,8 @@ func (q *Queries) GetAllSubscriptions(ctx context.Context, userID pgtype.UUID) (
 			&i.PlanID,
 			&i.PlanType,
 			&i.PurchaseDate,
+			&i.ValidFrom,
+			&i.OrderID,
 			&i.ValidUntil,
 			&i.RazorpayPaymentID,
 			&i.RazorpayOrderID,
@@ -92,7 +100,7 @@ func (q *Queries) GetAllSubscriptions(ctx context.Context, userID pgtype.UUID) (
 }
 
 const getSubscriptionByID = `-- name: GetSubscriptionByID :one
-SELECT id, user_id, plan_id, plan_type, purchase_date, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
+SELECT id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
 FROM subscriptions WHERE id = $1 ORDER BY created_at DESC LIMIT 1
 `
 
@@ -102,6 +110,8 @@ type GetSubscriptionByIDRow struct {
 	PlanID            pgtype.UUID
 	PlanType          string
 	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
 	ValidUntil        pgtype.Timestamptz
 	RazorpayPaymentID string
 	RazorpayOrderID   string
@@ -117,6 +127,46 @@ func (q *Queries) GetSubscriptionByID(ctx context.Context, id pgtype.UUID) (GetS
 		&i.PlanID,
 		&i.PlanType,
 		&i.PurchaseDate,
+		&i.ValidFrom,
+		&i.OrderID,
+		&i.ValidUntil,
+		&i.RazorpayPaymentID,
+		&i.RazorpayOrderID,
+		&i.RazorpaySignature,
+	)
+	return i, err
+}
+
+const getSubscriptionByPaymentID = `-- name: GetSubscriptionByPaymentID :one
+SELECT id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
+FROM subscriptions WHERE razorpay_payment_id = $1
+`
+
+type GetSubscriptionByPaymentIDRow struct {
+	ID                pgtype.UUID
+	UserID            pgtype.UUID
+	PlanID            pgtype.UUID
+	PlanType          string
+	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
+	ValidUntil        pgtype.Timestamptz
+	RazorpayPaymentID string
+	RazorpayOrderID   string
+	RazorpaySignature string
+}
+
+func (q *Queries) GetSubscriptionByPaymentID(ctx context.Context, razorpayPaymentID string) (GetSubscriptionByPaymentIDRow, error) {
+	row := q.db.QueryRow(ctx, getSubscriptionByPaymentID, razorpayPaymentID)
+	var i GetSubscriptionByPaymentIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PlanID,
+		&i.PlanType,
+		&i.PurchaseDate,
+		&i.ValidFrom,
+		&i.OrderID,
 		&i.ValidUntil,
 		&i.RazorpayPaymentID,
 		&i.RazorpayOrderID,
@@ -126,7 +176,7 @@ func (q *Queries) GetSubscriptionByID(ctx context.Context, id pgtype.UUID) (GetS
 }
 
 const getSubscriptionByUserID = `-- name: GetSubscriptionByUserID :one
-SELECT id, user_id, plan_id, plan_type, purchase_date, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
+SELECT id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
 FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1
 `
 
@@ -136,6 +186,8 @@ type GetSubscriptionByUserIDRow struct {
 	PlanID            pgtype.UUID
 	PlanType          string
 	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
 	ValidUntil        pgtype.Timestamptz
 	RazorpayPaymentID string
 	RazorpayOrderID   string
@@ -151,6 +203,51 @@ func (q *Queries) GetSubscriptionByUserID(ctx context.Context, userID pgtype.UUI
 		&i.PlanID,
 		&i.PlanType,
 		&i.PurchaseDate,
+		&i.ValidFrom,
+		&i.OrderID,
+		&i.ValidUntil,
+		&i.RazorpayPaymentID,
+		&i.RazorpayOrderID,
+		&i.RazorpaySignature,
+	)
+	return i, err
+}
+
+const getSubscriptionByUserIDOrderID = `-- name: GetSubscriptionByUserIDOrderID :one
+SELECT id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
+FROM subscriptions WHERE user_id = $1 AND order_id = $2 ORDER BY created_at DESC LIMIT 1
+`
+
+type GetSubscriptionByUserIDOrderIDParams struct {
+	UserID  pgtype.UUID
+	OrderID string
+}
+
+type GetSubscriptionByUserIDOrderIDRow struct {
+	ID                pgtype.UUID
+	UserID            pgtype.UUID
+	PlanID            pgtype.UUID
+	PlanType          string
+	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
+	ValidUntil        pgtype.Timestamptz
+	RazorpayPaymentID string
+	RazorpayOrderID   string
+	RazorpaySignature string
+}
+
+func (q *Queries) GetSubscriptionByUserIDOrderID(ctx context.Context, arg GetSubscriptionByUserIDOrderIDParams) (GetSubscriptionByUserIDOrderIDRow, error) {
+	row := q.db.QueryRow(ctx, getSubscriptionByUserIDOrderID, arg.UserID, arg.OrderID)
+	var i GetSubscriptionByUserIDOrderIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PlanID,
+		&i.PlanType,
+		&i.PurchaseDate,
+		&i.ValidFrom,
+		&i.OrderID,
 		&i.ValidUntil,
 		&i.RazorpayPaymentID,
 		&i.RazorpayOrderID,

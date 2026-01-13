@@ -7,9 +7,11 @@ import (
 )
 
 type Config struct {
-	DB_URL string
+	DB_URL                string
 	SUBSCRIPTION_PLANS_ID map[string]uuid.UUID
-	PORT   string
+	PORT                  string
+	RAZORPAY_API_KEY      string
+	RAZORPAY_API_SECRET   string
 }
 
 func LoadEnv() *Config {
@@ -22,6 +24,9 @@ func LoadEnv() *Config {
 			"pro":   uuid.MustParse(os.Getenv("PRO_PLAN_ID")),
 		},
 
-		PORT:   os.Getenv("PORT"),
+		PORT: os.Getenv("PORT"),
+
+		RAZORPAY_API_KEY:    os.Getenv("RAZORPAY_API_KEY"),
+		RAZORPAY_API_SECRET: os.Getenv("RAZORPAY_API_SECRET"),
 	}
 }
