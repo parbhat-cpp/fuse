@@ -1,0 +1,16 @@
+package handlers
+
+func PaymentRoutes(h *PaymentHandler) []Route {
+	return []Route{
+		{
+			Method:  "GET",
+			Path:    "/payment/initialize",
+			Handler: h.InitializePayment,
+		},
+		{
+			Method:  "POST",
+			Path:    "/payment/verify",
+			Handler: h.VerifyPayment,
+		},
+	}
+}
