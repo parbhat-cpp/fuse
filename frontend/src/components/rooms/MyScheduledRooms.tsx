@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { BASE_URL } from 'config'
+import { API_URL } from 'config'
 import { useEffect, useRef } from 'react'
 import { List, useDynamicRowHeight } from 'react-window'
 import ScheduledRoomListItem from './ScheduledRoomListItem'
@@ -16,7 +16,7 @@ export default function MyScheduledRooms() {
     pageParam,
   }): Promise<Record<string, any>> => {
     const res = await fetch(
-      `${BASE_URL}/room-search/scheduled?page=${pageParam}`,
+      `${API_URL}/room-search/scheduled?page=${pageParam}`,
       {
         headers: {
           Authorization: 'Bearer ' + getToken(),

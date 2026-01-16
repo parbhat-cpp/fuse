@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
-import { BASE_URL, SUPABASE_AUTH_KEY } from 'config'
+import { API_URL, BASE_URL, SUPABASE_AUTH_KEY } from 'config'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -29,7 +29,7 @@ export function canJoinRoom(date: string) {
 }
 
 export function roomJoinLink(roomId: string) {
-  return `${BASE_URL}/room/join-room?id=${roomId}`
+  return `${API_URL}/room/join-room?id=${roomId}`
 }
 
 export function getToken() {

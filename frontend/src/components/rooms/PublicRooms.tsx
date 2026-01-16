@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { BASE_URL } from 'config'
+import { API_URL } from 'config'
 import { List, useDynamicRowHeight } from 'react-window'
 import PublicRoomListItem from './PublicRoomListItem'
 import { getToken } from '@/lib/utils'
@@ -17,7 +17,7 @@ export default function PublicRooms() {
     pageParam,
   }): Promise<Record<string, any>> => {
     const res = await fetch(
-      `${BASE_URL}/room-search/public?page=${pageParam}`,
+      `${API_URL}/room-search/public?page=${pageParam}`,
       {
         headers: {
           Authorization: 'Bearer ' + getToken(),

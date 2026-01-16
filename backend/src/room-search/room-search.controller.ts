@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { RoomSearchService } from './room-search.service';
+import { UUID } from 'node:crypto';
 
 @Controller('room-search')
 export class RoomSearchController {
@@ -31,7 +32,7 @@ export class RoomSearchController {
     @Req() request: Request,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
   ) {
-    const userId = request['user'].sub;
+    const userId = request.headers['X-User-Id'] as string as UUID;
     return this.roomSearchService.searchScheduledRooms(userId, page);
   }
 }

@@ -6,7 +6,7 @@ import { IoIosLogOut } from 'react-icons/io'
 import PrimaryButton from '@/components/common/PrimaryButton'
 import BottomNavigation from '@/components/app/BottomNavigation'
 import SocketProvider from '@/socket'
-import { BASE_URL, ROUTES_NO_SIDEBAR } from 'config'
+import { BASE_URL, ROUTES_NO_SIDEBAR, WS_URL } from 'config'
 import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/app')({
@@ -32,7 +32,7 @@ function RouteComponent() {
     <SocketProvider
       config={{
         room: {
-          url: `${BASE_URL}/room`,
+          url: `${WS_URL}/room`,
         },
       }}
     >
