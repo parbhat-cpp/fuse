@@ -48,15 +48,16 @@ export class RoomSchedulerService {
   async isRoomActive(roomId: string) {
     const job = await this.queue.getDelayed();
     const jobData = job.find((j) => j.data.roomId === roomId);
+
+    if (!jobData) {
+      return { isActive: false, delay: 0 };
+    }
+
     const delay =
       new Date(jobData.data.startAt as string).getTime() - Date.now();
 
     if (delay > 0) {
       return { isActive: false, delay };
-    }
-
-    if (!jobData) {
-      return { isActive: false, delay: 0 };
     }
 
     return { isActive: true, delay };

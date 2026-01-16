@@ -149,16 +149,6 @@ export class RoomsService {
       return;
     }
 
-    const { isActive, delay } =
-      await this.roomSchedulerService.isRoomActive(roomId);
-
-    Logger.log({ isActive, delay });
-
-    if (!isActive) {
-      client.emit(RoomEvents.ROOM_SCHEDULED, { delay });
-      return;
-    }
-
     const publicRoomExists = await this.redisService.redis.hexists(
       `${RoomType.PUBLIC}:${roomId}`,
       'roomId',
@@ -178,6 +168,16 @@ export class RoomsService {
 
       if (privateRoomExists) {
         roomType = RoomType.PRIVATE;
+      }
+
+      const { isActive, delay } =
+        await this.roomSchedulerService.isRoomActive(roomId);
+
+      Logger.log({ isActive, delay });
+
+      if (!isActive) {
+        client.emit(RoomEvents.ROOM_SCHEDULED, { delay });
+        return;
       }
 
       const roomData = await this.redisService.redis.hgetall(

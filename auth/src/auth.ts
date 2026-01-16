@@ -23,8 +23,6 @@ export const authenticateUser = async(req: Request, res: Response) => {
 
         const payload = verify(token, jwtSecret);
 
-        console.log(payload);
-
         res.setHeader('X-User-Id', (payload as any).sub);
         res.setHeader('X-User-Email', (payload as any).email);
         res.setHeader('X-User-Name', (payload as any).user_metadata?.full_name || '');

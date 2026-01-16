@@ -3,20 +3,17 @@ import {
   Controller,
   Get,
   Req,
-  UseGuards,
   ParseIntPipe,
   ParseBoolPipe,
   ParseFloatPipe,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { RoomSearchService } from './room-search.service';
 
 @Controller('room-search')
 export class RoomSearchController {
   constructor(private readonly roomSearchService: RoomSearchService) {}
 
-  @UseGuards(AuthGuard)
   @Get('public')
   async searchRooms(
     @Req() request: Request,
@@ -29,7 +26,6 @@ export class RoomSearchController {
     return this.roomSearchService.searchRooms(query, nearBy, lat, lng, page);
   }
 
-  @UseGuards(AuthGuard)
   @Get('scheduled')
   async searchScheduledRooms(
     @Req() request: Request,
