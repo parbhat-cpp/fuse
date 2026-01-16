@@ -1,4 +1,4 @@
 export class RemoveAttendeeDto {
-    roomId: string;
-    attendeeUserId: string;
+  roomId: string;
+  attendeeUserId: string;
 }

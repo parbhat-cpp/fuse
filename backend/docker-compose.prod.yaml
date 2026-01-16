@@ -8,8 +8,8 @@
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
 services:
-  prod:
-    container_name: prod
+  main-backend:
+    container_name: backend-prod
     build:
       context: .
       dockerfile: Dockerfile.prod

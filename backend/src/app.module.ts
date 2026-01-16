@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { RoomsModule } from './rooms/rooms.module';
 import { RoomSchedulerModule } from './room-scheduler/room-scheduler.module';
 import { RoomSearchModule } from './room-search/room-search.module';
+import { AccessService } from './lib/access/access.service';
 import 'dotenv/config';
 
 @Module({
@@ -29,6 +30,6 @@ import 'dotenv/config';
     RoomSearchModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AccessService],
 })
 export class AppModule {}

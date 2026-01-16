@@ -1,6 +1,6 @@
 services:
-  dev:
-    container_name: dev
+  main-backend:
+    container_name: backend-dev
     build:
       context: .
       dockerfile: Dockerfile.dev
