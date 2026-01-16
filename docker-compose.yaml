@@ -1,0 +1,12 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - backend_fuse-network
+networks:
+  backend_fuse-network:
+    external: true

@@ -1,0 +1,15 @@
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth_service
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    networks:
+      - backend_fuse-network
+networks:
+  backend_fuse-network:
+    external: true
