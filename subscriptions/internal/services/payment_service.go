@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/parbhat-cpp/fuse/subscriptions/constants"
 	"github.com/parbhat-cpp/fuse/subscriptions/internal/config"
 	"github.com/parbhat-cpp/fuse/subscriptions/internal/db/sqlc"
@@ -18,13 +18,13 @@ import (
 
 type PaymentService struct {
 	query *sqlc.Queries
-	db    *pgx.Conn
+	pool  *pgxpool.Pool
 }
 
-func NewPaymentService(query *sqlc.Queries, db *pgx.Conn) *PaymentService {
+func NewPaymentService(query *sqlc.Queries, pool *pgxpool.Pool) *PaymentService {
 	return &PaymentService{
 		query: query,
-		db:    db,
+		pool:  pool,
 	}
 }
 
@@ -69,7 +69,7 @@ func (s *PaymentService) VerifyPayment(user_id uuid.UUID, plan_type string, orde
 		return nil, fmt.Errorf("Invalid plan type")
 	}
 
-	tx, err := s.db.Begin(context.Background())
+	tx, err := s.pool.Begin(context.Background())
 
 	if err != nil {
 		refund_flag = true
