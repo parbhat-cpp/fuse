@@ -1,6 +1,6 @@
 export const BASE_URL = import.meta.env.VITE_BASE_URL
 export const API_URL = `${BASE_URL}/api`
-export const SUBSCRIPTION_URL = `${BASE_URL}/subscription`
+export const SUBSCRIPTION_URL = `${BASE_URL}/subscription/v1`
 export const WS_URL = `${BASE_URL}`
 export const MEDIASOUP_URL = import.meta.env.VITE_MEDIASOUP_URL
 export const ENV = import.meta.env.NODE_ENV
@@ -16,3 +16,6 @@ export const GOOGLE_AUTH_CONFIG = {
   REDIRECT_URL: `${BASE_URL}/user/googleauth`,
   CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID,
 }
+
+export const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID
+export const RAZORPAY_KEY_SECRET = import.meta.env.VITE_RAZORPAY_KEY_SECRET

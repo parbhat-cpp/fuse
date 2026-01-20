@@ -50,6 +50,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
       <body>
         {children}
