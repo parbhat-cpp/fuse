@@ -12,28 +12,46 @@ import (
 )
 
 const createSubscriptionUsage = `-- name: CreateSubscriptionUsage :one
-INSERT INTO subscription_usage (user_id, valid_from, valid_until, usage)
-VALUES ($1, $2, $3, $4::text::jsonb)
-RETURNING (id, subscription_id, valid_from, valid_until)
+INSERT INTO subscription_usage (user_id, valid_from, valid_until, usage, subscription_id)
+VALUES ($1, $2, $3, $4::text::jsonb, $5)
+RETURNING id, subscription_id, valid_from, valid_until, usage, subscription_id
 `
 
 type CreateSubscriptionUsageParams struct {
-	UserID     pgtype.UUID
-	ValidFrom  pgtype.Timestamptz
-	ValidUntil pgtype.Timestamptz
-	Column4    string
+	UserID         pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Column4        string
+	SubscriptionID pgtype.UUID
 }
 
-func (q *Queries) CreateSubscriptionUsage(ctx context.Context, arg CreateSubscriptionUsageParams) (interface{}, error) {
+type CreateSubscriptionUsageRow struct {
+	ID               pgtype.UUID
+	SubscriptionID   pgtype.UUID
+	ValidFrom        pgtype.Timestamptz
+	ValidUntil       pgtype.Timestamptz
+	Usage            []byte
+	SubscriptionID_2 pgtype.UUID
+}
+
+func (q *Queries) CreateSubscriptionUsage(ctx context.Context, arg CreateSubscriptionUsageParams) (CreateSubscriptionUsageRow, error) {
 	row := q.db.QueryRow(ctx, createSubscriptionUsage,
 		arg.UserID,
 		arg.ValidFrom,
 		arg.ValidUntil,
 		arg.Column4,
+		arg.SubscriptionID,
 	)
-	var column_1 interface{}
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i CreateSubscriptionUsageRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.Usage,
+		&i.SubscriptionID_2,
+	)
+	return i, err
 }
 
 const getAllSubscriptionUsage = `-- name: GetAllSubscriptionUsage :many
@@ -104,7 +122,7 @@ func (q *Queries) GetSubscriptionUsageByID(ctx context.Context, userID pgtype.UU
 const updateSubscriptionUsage = `-- name: UpdateSubscriptionUsage :one
 UPDATE subscription_usage SET usage = $3::text::jsonb
 WHERE id = $1 AND user_id = $2
-RETURNING (id, subscription_id, valid_from, valid_until, usage)
+RETURNING id, subscription_id, valid_from, valid_until, usage
 `
 
 type UpdateSubscriptionUsageParams struct {
@@ -113,17 +131,31 @@ type UpdateSubscriptionUsageParams struct {
 	Column3 string
 }
 
-func (q *Queries) UpdateSubscriptionUsage(ctx context.Context, arg UpdateSubscriptionUsageParams) (interface{}, error) {
+type UpdateSubscriptionUsageRow struct {
+	ID             pgtype.UUID
+	SubscriptionID pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Usage          []byte
+}
+
+func (q *Queries) UpdateSubscriptionUsage(ctx context.Context, arg UpdateSubscriptionUsageParams) (UpdateSubscriptionUsageRow, error) {
 	row := q.db.QueryRow(ctx, updateSubscriptionUsage, arg.ID, arg.UserID, arg.Column3)
-	var column_1 interface{}
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i UpdateSubscriptionUsageRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.Usage,
+	)
+	return i, err
 }
 
 const updateSubscriptionUsageDuration = `-- name: UpdateSubscriptionUsageDuration :one
 UPDATE subscription_usage SET valid_from = $3, valid_until = $4
 WHERE subscription_id = $1 AND user_id = $2
-RETURNING (id, subscription_id, valid_from, valid_until, usage)
+RETURNING id, subscription_id, valid_from, valid_until, usage
 `
 
 type UpdateSubscriptionUsageDurationParams struct {
@@ -133,14 +165,28 @@ type UpdateSubscriptionUsageDurationParams struct {
 	ValidUntil     pgtype.Timestamptz
 }
 
-func (q *Queries) UpdateSubscriptionUsageDuration(ctx context.Context, arg UpdateSubscriptionUsageDurationParams) (interface{}, error) {
+type UpdateSubscriptionUsageDurationRow struct {
+	ID             pgtype.UUID
+	SubscriptionID pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Usage          []byte
+}
+
+func (q *Queries) UpdateSubscriptionUsageDuration(ctx context.Context, arg UpdateSubscriptionUsageDurationParams) (UpdateSubscriptionUsageDurationRow, error) {
 	row := q.db.QueryRow(ctx, updateSubscriptionUsageDuration,
 		arg.SubscriptionID,
 		arg.UserID,
 		arg.ValidFrom,
 		arg.ValidUntil,
 	)
-	var column_1 interface{}
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i UpdateSubscriptionUsageDurationRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.Usage,
+	)
+	return i, err
 }

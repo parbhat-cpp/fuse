@@ -12,5 +12,10 @@ func PaymentRoutes(h *PaymentHandler) []Route {
 			Path:    "/payment/verify",
 			Handler: h.VerifyPayment,
 		},
+		{
+			Method:  "GET",
+			Path:    "/payment/plans",
+			Handler: h.GetPlans,
+		},
 	}
 }

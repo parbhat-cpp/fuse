@@ -14,7 +14,7 @@ import (
 const createNewRefund = `-- name: CreateNewRefund :one
 INSERT INTO refunds (subscription_id, razorpay_payment_id, amount, user_id)
 VALUES ($1, $2, $3, $4)
-RETURNING (id, subscription_id, razorpay_payment_id, amount, created_at, updated_at)
+RETURNING id, subscription_id, razorpay_payment_id, amount, created_at, updated_at
 `
 
 type CreateNewRefundParams struct {
@@ -24,16 +24,32 @@ type CreateNewRefundParams struct {
 	UserID            pgtype.UUID
 }
 
-func (q *Queries) CreateNewRefund(ctx context.Context, arg CreateNewRefundParams) (interface{}, error) {
+type CreateNewRefundRow struct {
+	ID                pgtype.UUID
+	SubscriptionID    pgtype.UUID
+	RazorpayPaymentID string
+	Amount            pgtype.Numeric
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+func (q *Queries) CreateNewRefund(ctx context.Context, arg CreateNewRefundParams) (CreateNewRefundRow, error) {
 	row := q.db.QueryRow(ctx, createNewRefund,
 		arg.SubscriptionID,
 		arg.RazorpayPaymentID,
 		arg.Amount,
 		arg.UserID,
 	)
-	var column_1 interface{}
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i CreateNewRefundRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.RazorpayPaymentID,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getRefundByPaymentID = `-- name: GetRefundByPaymentID :one

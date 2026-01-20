@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/parbhat-cpp/fuse/subscriptions/constants"
 	"github.com/parbhat-cpp/fuse/subscriptions/internal/services"
 )
 
@@ -25,6 +26,10 @@ func NewPaymentHandler(s *services.PaymentService) *PaymentHandler {
 	return &PaymentHandler{
 		s: s,
 	}
+}
+
+func (h *PaymentHandler) GetPlans(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, map[string]any{"plans": constants.GetPlans()})
 }
 
 func (h *PaymentHandler) InitializePayment(ctx echo.Context) error {

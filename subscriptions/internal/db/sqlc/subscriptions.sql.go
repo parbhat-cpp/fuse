@@ -14,7 +14,7 @@ import (
 const createSubscription = `-- name: CreateSubscription :one
 INSERT INTO subscriptions (user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING (id, plan_id, plan_type, purchase_date, valid_from, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature)
+RETURNING id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
 `
 
 type CreateSubscriptionParams struct {
@@ -30,7 +30,21 @@ type CreateSubscriptionParams struct {
 	RazorpaySignature string
 }
 
-func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (interface{}, error) {
+type CreateSubscriptionRow struct {
+	ID                pgtype.UUID
+	UserID            pgtype.UUID
+	PlanID            pgtype.UUID
+	PlanType          string
+	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
+	ValidUntil        pgtype.Timestamptz
+	RazorpayPaymentID string
+	RazorpayOrderID   string
+	RazorpaySignature string
+}
+
+func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (CreateSubscriptionRow, error) {
 	row := q.db.QueryRow(ctx, createSubscription,
 		arg.UserID,
 		arg.PlanID,
@@ -43,9 +57,21 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 		arg.RazorpayOrderID,
 		arg.RazorpaySignature,
 	)
-	var column_1 interface{}
-	err := row.Scan(&column_1)
-	return column_1, err
+	var i CreateSubscriptionRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PlanID,
+		&i.PlanType,
+		&i.PurchaseDate,
+		&i.ValidFrom,
+		&i.OrderID,
+		&i.ValidUntil,
+		&i.RazorpayPaymentID,
+		&i.RazorpayOrderID,
+		&i.RazorpaySignature,
+	)
+	return i, err
 }
 
 const getAllSubscriptions = `-- name: GetAllSubscriptions :many

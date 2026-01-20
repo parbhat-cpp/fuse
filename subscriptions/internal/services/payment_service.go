@@ -31,16 +31,16 @@ func NewPaymentService(query *sqlc.Queries, pool *pgxpool.Pool) *PaymentService 
 func (s *PaymentService) InitializePayment(plan_type string) (map[string]interface{}, error) {
 	razorpay_client := config.GetRazorpayClient()
 
-	plan_data, err := constants.GetPlanByID(uuid.MustParse(plan_type))
+	plan_data, exists := constants.GetPlans()[plan_type]
 
-	if err != nil {
+	if !exists {
 		return map[string]interface{}{}, fmt.Errorf("Invalid plan type")
 	}
 
 	order_data := map[string]interface{}{
 		"amount":   plan_data.Price * 100, // amount in paise
 		"currency": "INR",
-		"receipt":  uuid.New().String(),
+		"receipt":  "order_" + fmt.Sprintf("%x", uuid.New().String()[:8]),
 	}
 
 	body, err := razorpay_client.Order.Create(order_data, nil)
@@ -49,13 +49,16 @@ func (s *PaymentService) InitializePayment(plan_type string) (map[string]interfa
 		return map[string]interface{}{}, fmt.Errorf("Unable to create an order")
 	}
 
-	return body, nil
+	return map[string]interface{}{
+		"order": body,
+		"plan":  plan_data,
+	}, nil
 }
 
 func (s *PaymentService) VerifyPayment(user_id uuid.UUID, plan_type string, order_id string, razorpay_order_id string, razorpay_payment_id string, razorpay_signature string) (interface{}, error) {
 	cfg := config.LoadEnv()
 
-	plan, err := constants.GetPlanByID(cfg.SUBSCRIPTION_PLANS_ID[plan_type])
+	plan := constants.GetPlans()[plan_type]
 
 	var user_uuid pgtype.UUID = utils.ConvertGoogleUUIDToPgtypeUUID(user_id)
 	var plan_uuid pgtype.UUID = utils.ConvertGoogleUUIDToPgtypeUUID(plan.ID)
@@ -64,10 +67,6 @@ func (s *PaymentService) VerifyPayment(user_id uuid.UUID, plan_type string, orde
 	var refund_flag bool = false
 	var payment_verified bool = false
 	var sub_id pgtype.UUID
-
-	if err != nil {
-		return nil, fmt.Errorf("Invalid plan type")
-	}
 
 	tx, err := s.pool.Begin(context.Background())
 
@@ -103,16 +102,26 @@ func (s *PaymentService) VerifyPayment(user_id uuid.UUID, plan_type string, orde
 	}
 	payment_verified = true
 
-	sub, err := qtx.GetSubscriptionByUserIDOrderID(context.Background(), sqlc.GetSubscriptionByUserIDOrderIDParams{UserID: user_uuid, OrderID: order_id})
+	_, err = qtx.GetSubscriptionByUserIDOrderID(context.Background(), sqlc.GetSubscriptionByUserIDOrderIDParams{UserID: user_uuid, OrderID: order_id})
 
 	if err == nil {
-		new_sub_valid_from.Time = sub.ValidUntil.Time.AddDate(0, 0, 1)
-		new_sub_valid_from.Valid = true
-		new_sub_valid_to.Time = new_sub_valid_from.Time.AddDate(0, 0, 30)
-		new_sub_valid_to.Valid = true
+		return nil, fmt.Errorf("Payment already processed for this order")
 	}
 
-	sub_id = sub.ID
+	sub, err := qtx.GetSubscriptionByUserID(context.Background(), user_uuid)
+
+	if err == nil {
+		if sub.ValidFrom.Valid && sub.ValidUntil.Valid && sub.ValidUntil.Time.Before(time.Now()) {
+			new_sub_valid_from.Time = time.Now()
+			new_sub_valid_to.Time = sub.ValidUntil.Time.AddDate(0, 0, 30)
+		} else {
+			new_sub_valid_from.Time = sub.ValidUntil.Time.AddDate(0, 0, 1)
+			new_sub_valid_to.Time = new_sub_valid_from.Time.AddDate(0, 0, 30)
+		}
+		new_sub_valid_from.Valid = true
+		new_sub_valid_to.Valid = true
+		sub_id = sub.ID
+	}
 
 	sub_row, err := qtx.CreateSubscription(context.Background(), sqlc.CreateSubscriptionParams{
 		UserID:            user_uuid,
@@ -127,21 +136,22 @@ func (s *PaymentService) VerifyPayment(user_id uuid.UUID, plan_type string, orde
 		RazorpaySignature: razorpay_signature,
 	})
 
-	sub_id = sub_row.(sqlc.GetSubscriptionByIDRow).ID
-
 	if err != nil {
 		refund_flag = true
 		return nil, fmt.Errorf("Unable to create subscription")
 	}
 
+	sub_id = sub_row.ID
+
 	empty_usage := types.Usage{PublicRoomQuota: 0, RoomSchedulingQuota: 0}
 	empty_usage_json, _ := utils.ConvertMapTypeToBytes(empty_usage)
 
 	_, err = qtx.CreateSubscriptionUsage(context.Background(), sqlc.CreateSubscriptionUsageParams{
-		UserID:     user_uuid,
-		ValidFrom:  new_sub_valid_from,
-		ValidUntil: new_sub_valid_to,
-		Column4:    string(empty_usage_json),
+		UserID:         user_uuid,
+		ValidFrom:      new_sub_valid_from,
+		ValidUntil:     new_sub_valid_to,
+		Column4:        string(empty_usage_json),
+		SubscriptionID: sub_id,
 	})
 
 	if err != nil {
