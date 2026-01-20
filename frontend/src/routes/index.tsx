@@ -2,6 +2,7 @@ import BlurText from '@/components/animated/BlurText';
 import ShinyText from '@/components/animated/ShinyText';
 import Header from '@/components/common/Header';
 import { supabaseClient } from '@/supabase-client';
+import { getUserPlan } from '@/utils/subscription';
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -42,29 +43,12 @@ function App() {
         .select(`id, username, full_name, email, avatar_url, created_at, updated_at`)
         .eq('id', user?.id)
         .single();
-
-      // get user subscription plan
-      const subscriptionResponse = await supabaseClient
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .gte('valid_from', new Date().toISOString())
-        .lte('valid_until', new Date().toISOString())
-        .single();
-
-      if (subscriptionResponse.error) {
-        localStorage.setItem("currentPlan", JSON.stringify({ plan_type: "free", valid_from: null, valid_until: null }));
-      }
+      
+      await getUserPlan(user!.id);
 
       if (userResponse.error) {
         toast.error("Failed to get user data. Login again");
         return;
-      }
-
-      if (subscriptionResponse.data === null ) {
-        localStorage.setItem("currentPlan", JSON.stringify({ plan_type: "free", valid_from: null, valid_until: null }));
-      } else {
-        localStorage.setItem("currentPlan", JSON.stringify(subscriptionResponse.data));
       }
 
       localStorage.setItem("currentUser", JSON.stringify(userResponse.data));

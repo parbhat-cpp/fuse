@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { getToken } from '@/lib/utils';
+import { getUserPlan } from '@/utils/subscription';
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { RAZORPAY_KEY_ID, SUBSCRIPTION_URL } from 'config';
@@ -85,15 +86,12 @@ function RouteComponent() {
             }),
           });
 
-          console.log(verifyResponse);
-
           if (!verifyResponse.ok) {
             throw new Error('Payment verification failed');
           }
 
-          const verifyData = await verifyResponse.json();
-          console.log(verifyData);
-          // localStorage.setItem("currentPlan", JSON.stringify(verifyData.currentPlan));
+          await getUserPlan(currentUser.id);
+
           toast.success('Plan upgraded successfully');
         },
         "prefill": { //We recommend using the prefill parameter to auto-fill customer's contact information, especially their phone number
@@ -120,9 +118,9 @@ function RouteComponent() {
 
   return <div className='flex-1 p-10 flex justify-center items-center'>
     <div className='relative bg-white p-5 rounded-xl grid grid-cols-3 gap-12'>
-      {Object.keys(plans.data || {}).map((planKey) => {
+      {Object.keys(plans.data || {}).map((planKey) => {        
         const plan = plans.data[planKey];
-        const isCurrentPlan = currentPlan.plan_type === planKey;
+        const isCurrentPlan = currentPlan.plan_type?.toLowerCase() === planKey;
 
         return <div key={planKey} className='p-3 rounded-lg flex flex-col justify-between space-y-5 w-64'>
           <div className='space-y-5'>
