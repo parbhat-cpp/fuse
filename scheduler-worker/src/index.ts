@@ -14,14 +14,7 @@ const redisConn = new Redis({
 const worker = new Worker(
   "roomSchedulerQueue",
   async (job) => {
-    const { roomId } = job.data;
-
-    // const redis = new Redis({
-    //   host: process.env.REDIS_HOST,
-    //   port: parseInt(process.env.REDIS_PORT),
-    //   password: process.env.REDIS_PASSWORD,
-    // });
-    redisConn.publish("room:activate", JSON.stringify({ roomId }));
+    redisConn.publish("room:activate", JSON.stringify(job.data));
   },
   {
     connection: redisConn,
