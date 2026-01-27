@@ -77,12 +77,22 @@ function RouteComponent() {
       }
     })
 
+    socket.on('plan-expired', () => {
+      toast.error('Your plan has expired. Please upgrade to create or join rooms.')
+    });
+
+    socket.on('access-denied', () => {
+      toast.error('Access denied to the room')
+    })
+
     return () => {
       socket.off('room-created')
       socket.off('room-scheduled')
       socket.off('room-not-found')
       socket.off('room-limit-reached')
       socket.off('enter-room')
+      socket.off('plan-expired')
+      socket.off('access-denied')
     }
   }, [socket])
 

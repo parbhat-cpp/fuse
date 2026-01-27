@@ -9,9 +9,10 @@ interface PublicRoomListItemProps {
     attendeesCount: number
     roomId: string
   }
+  handleJoinRoom: (roomId: string) => void
 }
 
-export default function PublicRoomListItem({ room }: PublicRoomListItemProps) {
+export default function PublicRoomListItem({ room, handleJoinRoom }: PublicRoomListItemProps) {
   const relativeTime = useRelativeTime(room.startAt)
 
   return (
@@ -23,7 +24,7 @@ export default function PublicRoomListItem({ room }: PublicRoomListItemProps) {
           </p>
           <p>Ends in {relativeTime}</p>
         </div>
-        <Button>Join</Button>
+        <Button onClick={() => handleJoinRoom(room.roomId)}>Join</Button>
       </div>
       <Separator />
     </>
