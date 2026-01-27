@@ -93,6 +93,32 @@ func (q *Queries) GetAllSubscriptionUsage(ctx context.Context, userID pgtype.UUI
 	return items, nil
 }
 
+const getCurrentSubscriptionUsageByUserID = `-- name: GetCurrentSubscriptionUsageByUserID :one
+SELECT id, subscription_id, valid_from, valid_until, usage
+FROM subscription_usage WHERE user_id = $1 AND valid_from <= NOW() AND valid_until >= NOW()
+`
+
+type GetCurrentSubscriptionUsageByUserIDRow struct {
+	ID             pgtype.UUID
+	SubscriptionID pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Usage          []byte
+}
+
+func (q *Queries) GetCurrentSubscriptionUsageByUserID(ctx context.Context, userID pgtype.UUID) (GetCurrentSubscriptionUsageByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, getCurrentSubscriptionUsageByUserID, userID)
+	var i GetCurrentSubscriptionUsageByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.Usage,
+	)
+	return i, err
+}
+
 const getSubscriptionUsageByID = `-- name: GetSubscriptionUsageByID :one
 SELECT id, subscription_id, valid_from, valid_until, usage
 FROM subscription_usage WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1

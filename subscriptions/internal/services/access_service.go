@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,6 +32,11 @@ type AccessResponse struct {
 	IsAllowed   bool
 	LimitLeft   int
 	PlanExpired bool
+}
+
+type UsageResponse struct {
+	Plan      constants.Plan
+	PlanUsage interface{}
 }
 
 /**
@@ -103,136 +109,134 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 		return &AccessResponse{Plan: freePlan, PlanUsage: new_sub_usage_row, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 	}
 
-	if user_subscription.PlanType == "basic" {
-		basicPlan, _ := constants.GetPlanByID(cfg.SUBSCRIPTION_PLANS_ID["basic"])
-		usage, _ := utils.ConvertBytesToMap(user_usage.Usage)
+	if strings.ToLower(user_subscription.PlanType) == "basic" {
+		basicPlan, _ := constants.GetPlans()["basic"]
+		usage, _ := utils.ConvertBytesToMapType[types.Usage](user_usage.Usage)
 
 		if access_request == constants.AccessTypeJoinRoom {
-			if usage["public_room_quota"].(int) >= basicPlan.FeaturesJson["public_room_join_limit"] {
-				return &AccessResponse{Plan: basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
+			if usage.PublicRoomQuota >= basicPlan.FeaturesJson["public_room_join_limit"] {
+				return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
 			} else {
-				usage["public_room_quota"] = usage["public_room_quota"].(int) + 1
-				limit := basicPlan.FeaturesJson["public_room_join_limit"] - usage["public_room_quota"].(int)
-				usage_json_byte, err := utils.ConvertMapToBytes(usage)
+				usage.PublicRoomQuota = usage.PublicRoomQuota + 1
+				limit := basicPlan.FeaturesJson["public_room_join_limit"] - usage.PublicRoomQuota
+				usage_json_byte, err := utils.ConvertMapTypeToBytes[*types.Usage](usage)
 
 				if err != nil {
-					return &AccessResponse{Plan: basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot create json bytes %s", err)
+					return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot create json bytes %s", err)
 				}
 
-				// usage_json := []byte(`{"public_room_quota":` + strconv.Itoa(usage["public_room_quota"].(int)+1) + `, "room_scheduling_quota":` + strconv.Itoa(usage["room_scheduling_quota"].(int)) + `}`)
 				s.query.UpdateSubscriptionUsage(context.Background(), sqlc.UpdateSubscriptionUsageParams{ID: user_usage.ID, UserID: user_uuid, Column3: string(usage_json_byte)})
 
-				return &AccessResponse{Plan: basicPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
+				return &AccessResponse{Plan: &basicPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 			}
 		}
 
 		if access_request == constants.AccessTypeSchedule {
-			if usage["room_scheduling_quota"].(int) >= basicPlan.FeaturesJson["room_schedule_limit"] {
-				return &AccessResponse{Plan: basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
+			if usage.RoomSchedulingQuota >= basicPlan.FeaturesJson["room_schedule_limit"] {
+				return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
 			} else {
-				usage["room_scheduling_quota"] = usage["room_scheduling_quota"].(int) + 1
-				limit := basicPlan.FeaturesJson["room_schedule_limit"] - usage["room_scheduling_quota"].(int)
-				usage_json_byte, err := utils.ConvertMapToBytes(usage)
+				usage.RoomSchedulingQuota = usage.RoomSchedulingQuota + 1
+				limit := basicPlan.FeaturesJson["room_schedule_limit"] - usage.RoomSchedulingQuota
+				usage_json_byte, err := utils.ConvertMapTypeToBytes[*types.Usage](usage)
 
 				if err != nil {
-					return &AccessResponse{Plan: basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert maps to bytes %s", err)
+					return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert maps to bytes %s", err)
 				}
 				s.query.UpdateSubscriptionUsage(context.Background(), sqlc.UpdateSubscriptionUsageParams{ID: user_usage.ID, UserID: user_uuid, Column3: string(usage_json_byte)})
 
-				return &AccessResponse{Plan: basicPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
+				return &AccessResponse{Plan: &basicPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 			}
 		}
 	}
 
-	if user_subscription.PlanType == "pro" {
-		proPlan, _ := constants.GetPlanByID(cfg.SUBSCRIPTION_PLANS_ID["pro"])
-		usage, _ := utils.ConvertBytesToMap(user_usage.Usage)
+	if strings.ToLower(user_subscription.PlanType) == "pro" {
+		proPlan, _ := constants.GetPlans()["pro"]
+		usage, _ := utils.ConvertBytesToMapType[types.Usage](user_usage.Usage)
 
 		if access_request == constants.AccessTypeJoinRoom {
-			if usage["public_room_quota"].(int) >= proPlan.FeaturesJson["public_room_join_limit"] {
-				return &AccessResponse{Plan: proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
+			if usage.PublicRoomQuota >= proPlan.FeaturesJson["public_room_join_limit"] {
+				return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
 			} else {
-				usage["public_room_quota"] = usage["public_room_quota"].(int) + 1
-				limit := proPlan.FeaturesJson["public_room_join_limit"] - usage["public_room_quota"].(int)
-				usage_json_byte, err := utils.ConvertMapToBytes(usage)
+				usage.PublicRoomQuota = usage.PublicRoomQuota + 1
+				limit := proPlan.FeaturesJson["public_room_join_limit"] - usage.PublicRoomQuota
+				usage_json_byte, err := utils.ConvertMapTypeToBytes[*types.Usage](usage)
 
 				if err != nil {
-					return &AccessResponse{Plan: proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert maps to byte %s", err)
+					return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert maps to byte %s", err)
 				}
 				s.query.UpdateSubscriptionUsage(context.Background(), sqlc.UpdateSubscriptionUsageParams{ID: user_usage.ID, UserID: user_uuid, Column3: string(usage_json_byte)})
 
-				return &AccessResponse{Plan: proPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
+				return &AccessResponse{Plan: &proPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 			}
 		}
 
 		if access_request == constants.AccessTypeSchedule {
-			if usage["room_scheduling_quota"].(int) >= proPlan.FeaturesJson["room_schedule_limit"] {
-				return &AccessResponse{Plan: proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
+			if usage.RoomSchedulingQuota >= proPlan.FeaturesJson["room_schedule_limit"] {
+				return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
 			} else {
-				usage["room_scheduling_quota"] = usage["room_scheduling_quota"].(int) + 1
-				limit := proPlan.FeaturesJson["room_schedule_limit"] - usage["room_scheduling_quota"].(int)
-
-				usage_json_byte, err := utils.ConvertMapToBytes(usage)
+				usage.RoomSchedulingQuota = usage.RoomSchedulingQuota + 1
+				limit := proPlan.FeaturesJson["room_schedule_limit"] - usage.RoomSchedulingQuota
+				usage_json_byte, err := utils.ConvertMapTypeToBytes[*types.Usage](usage)
 
 				if err != nil {
-					return &AccessResponse{Plan: proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to convert usage map to bytes %s", err)
+					return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to convert usage map to bytes %s", err)
 				}
 
 				s.query.UpdateSubscriptionUsage(context.Background(), sqlc.UpdateSubscriptionUsageParams{ID: user_usage.ID, UserID: user_uuid, Column3: string(usage_json_byte)})
 
-				return &AccessResponse{Plan: proPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
+				return &AccessResponse{Plan: &proPlan, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 			}
 		}
 	}
 
-	freePlan, _ := constants.GetPlanByID(cfg.SUBSCRIPTION_PLANS_ID["free"])
+	freePlan, _ := constants.GetPlans()["free"]
 	usage, err := utils.ConvertBytesToMapType[types.Usage](user_usage.Usage)
 
 	if err != nil {
-		return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert usage bytes to map %s", err)
+		return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert usage bytes to map %s", err)
 	}
 
 	if access_request == constants.AccessTypeJoinRoom {
 		if usage.PublicRoomQuota >= freePlan.FeaturesJson["public_room_join_limit"] {
-			return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
+			return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
 		} else {
 			usage.PublicRoomQuota = usage.PublicRoomQuota + 1
 			limit := freePlan.FeaturesJson["public_room_join_limit"] - usage.PublicRoomQuota
 
-			usage_json_byte, err := utils.ConvertMapTypeToBytes(usage)
+			usage_json_byte, err := utils.ConvertMapTypeToBytes[*types.Usage](usage)
 
 			if err != nil {
-				return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert maps to byte %s", err)
+				return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Cannot convert maps to byte %s", err)
 			}
 			updated_row, err := s.query.UpdateSubscriptionUsage(context.Background(), sqlc.UpdateSubscriptionUsageParams{ID: user_usage.ID, UserID: user_uuid, Column3: string(usage_json_byte)})
 
 			if err != nil {
-				return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to update subscription usage %s", err)
+				return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to update subscription usage %s", err)
 			}
 
-			return &AccessResponse{Plan: freePlan, PlanUsage: updated_row, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
+			return &AccessResponse{Plan: &freePlan, PlanUsage: updated_row, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 		}
 	}
 
 	if access_request == constants.AccessTypeSchedule {
 		if usage.RoomSchedulingQuota >= freePlan.FeaturesJson["room_schedule_limit"] {
-			return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
+			return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
 		} else {
 			usage.RoomSchedulingQuota = usage.RoomSchedulingQuota + 1
 			limit := freePlan.FeaturesJson["room_schedule_limit"] - usage.RoomSchedulingQuota
 			usage_json_byte, err := utils.ConvertMapTypeToBytes(usage)
 
 			if err != nil {
-				return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to convert usage map to bytes %s", err)
+				return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to convert usage map to bytes %s", err)
 			}
 
 			updated_row, err := s.query.UpdateSubscriptionUsage(context.Background(), sqlc.UpdateSubscriptionUsageParams{ID: user_usage.ID, UserID: user_uuid, Column3: string(usage_json_byte)})
 
 			if err != nil {
-				return &AccessResponse{Plan: freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to update subscription usage %s", err)
+				return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Failed to update subscription usage %s", err)
 			}
 
-			return &AccessResponse{Plan: freePlan, PlanUsage: updated_row, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
+			return &AccessResponse{Plan: &freePlan, PlanUsage: updated_row, IsAllowed: true, LimitLeft: limit, PlanExpired: false}, nil
 		}
 	}
 

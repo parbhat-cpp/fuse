@@ -7,6 +7,10 @@ RETURNING id, subscription_id, valid_from, valid_until, usage, subscription_id;
 SELECT id, subscription_id, valid_from, valid_until, usage
 FROM subscription_usage WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1;
 
+-- name: GetCurrentSubscriptionUsageByUserID :one
+SELECT id, subscription_id, valid_from, valid_until, usage
+FROM subscription_usage WHERE user_id = $1 AND valid_from <= NOW() AND valid_until >= NOW();
+
 -- name: GetAllSubscriptionUsage :many
 SELECT id, subscription_id, valid_from, valid_until, usage
 FROM subscription_usage WHERE user_id = $1;
