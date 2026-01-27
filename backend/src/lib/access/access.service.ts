@@ -13,7 +13,13 @@ export class AccessService {
   async hasAccess(userId: string, accessType: string) {
     try {
       const accessResponse = await fetch(
-        `${this.subscriptionServiceUrl}/subscription/v1/access?userId=${userId}&access_request=${accessType}`,
+        `${this.subscriptionServiceUrl}/v1/access?user_id=${userId}&access_request=${accessType}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
       );
 
       if (accessResponse.ok) {

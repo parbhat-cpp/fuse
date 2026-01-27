@@ -22,7 +22,7 @@ export class RoomSchedulerService {
     private readonly redisService: RedisService,
   ) {}
 
-  async scheduleRoom(roomId: string, roomData: Room) {
+  async scheduleRoom(roomId: string, roomData: Room, delayInMins: number) {
     const delay = roomData.startAt.getTime() - Date.now();
 
     const scheduledRoom = this.roomSchedulerRepository.create({
@@ -37,7 +37,11 @@ export class RoomSchedulerService {
 
     await this.queue.add(
       'room:activate',
-      { roomId, startAt: roomData.startAt.toISOString() },
+      {
+        roomId,
+        startAt: roomData.startAt.toISOString(),
+        duration: delayInMins,
+      },
       {
         delay,
         removeOnComplete: true,
@@ -50,7 +54,7 @@ export class RoomSchedulerService {
     const jobData = job.find((j) => j.data.roomId === roomId);
 
     if (!jobData) {
-      return { isActive: false, delay: 0 };
+      return { isActive: true, delay: 0 };
     }
 
     const delay =
@@ -63,7 +67,7 @@ export class RoomSchedulerService {
     return { isActive: true, delay };
   }
 
-  async activateRoom(roomId: string) {
+  async activateRoom(roomId: string, delayInMins: number) {
     const scheduledRoom = await this.roomSchedulerRepository.findOne({
       where: { roomId },
       relations: {
@@ -100,7 +104,7 @@ export class RoomSchedulerService {
       formatRoomData(roomData),
     );
 
-    const delay = 45 * 60 * 1000; // room will be active for 45 minutes
+    const delay = delayInMins * 60 * 1000; // room will be active for specified no. of minutes
 
     await this.queue.add(
       'room:terminate',

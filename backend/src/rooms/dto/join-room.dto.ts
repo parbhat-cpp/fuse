@@ -4,4 +4,5 @@ import { Room } from './room.dto';
 export class JoinRoomDto extends Room {
   roomId?: string;
   joinee: UserType;
+  publiclyAccessibleRoom?: boolean;
 }

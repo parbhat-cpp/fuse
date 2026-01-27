@@ -13,12 +13,14 @@ import { ChatDto } from './dto/chat.dto';
 import { UserType } from 'src/user/entities/user.entity';
 import { roomActivities } from './config';
 import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service';
+import { AccessService } from 'src/lib/access/access.service';
 
 @Injectable()
 export class RoomsService {
   constructor(
     private readonly roomSchedulerService: RoomSchedulerService,
     private readonly redisService: RedisService,
+    private readonly accessService: AccessService,
   ) {}
 
   async roomExists(roomId: string, userId: string) {
@@ -103,7 +105,31 @@ export class RoomsService {
     const resData = unformatRoomData(roomData);
 
     if (scheduleRoom) {
-      await this.roomSchedulerService.scheduleRoom(roomId, resData);
+      const { data, error } = await this.accessService.hasAccess(
+        payload.admin.id,
+        'schedule_room',
+      );
+
+      if (error) {
+        client.emit(RoomEvents.ACCESS_DENIED);
+        return;
+      }
+
+      if (data.PlanExpired) {
+        client.emit(RoomEvents.PLAN_EXPIRED);
+        return;
+      }
+
+      if (!data.IsAllowed) {
+        client.emit(RoomEvents.ACCESS_DENIED);
+        return;
+      }
+
+      await this.roomSchedulerService.scheduleRoom(
+        roomId,
+        resData,
+        data.Plan.FeaturesJson.room_duration,
+      );
       client.emit(RoomEvents.ROOM_SCHEDULED, {
         roomName: resData.roomName,
         roomId: resData.roomId,
@@ -123,12 +149,6 @@ export class RoomsService {
         roomData,
       );
     }
-
-    // client.emit(RoomEvents.ROOM_SCHEDULED, {
-    //   roomName: resData.roomName,
-    //   roomId: resData.roomId,
-    //   startAt: resData.startAt,
-    // });
     client.emit(RoomEvents.ROOM_CREATED, {
       roomData: resData,
       roomActivities,
@@ -143,6 +163,7 @@ export class RoomsService {
     const roomId = payload.roomId;
     const user = payload.joinee;
     const userId = client.data.userId;
+    const publiclyAccessibleRoom = payload.publiclyAccessibleRoom;
 
     if (!roomId) {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
@@ -173,22 +194,40 @@ export class RoomsService {
       const { isActive, delay } =
         await this.roomSchedulerService.isRoomActive(roomId);
 
-      Logger.log({ isActive, delay });
+      Logger.log(`isActive: ${isActive}, delay: ${delay}`);
 
       if (!isActive) {
         client.emit(RoomEvents.ROOM_SCHEDULED, { delay });
         return;
       }
 
+      if (publiclyAccessibleRoom) {
+        const { success, data, error } = await this.accessService.hasAccess(
+          userId,
+          'join_public_room',
+        );
+
+        if (error) {
+          client.emit(RoomEvents.ACCESS_DENIED);
+          return;
+        }
+
+        if (data.PlanExpired) {
+          client.emit(RoomEvents.PLAN_EXPIRED);
+          return;
+        }
+
+        if (!success || !data.IsAllowed) {
+          client.emit(RoomEvents.ACCESS_DENIED);
+          return;
+        }
+      }
+
       const roomData = await this.redisService.redis.hgetall(
         `${roomType}:${roomId}`,
       );
 
-      Logger.log(`${typeof roomData}`);
-
       const roomDataJson: Room = unformatRoomData(roomData);
-
-      Logger.log(`${JSON.stringify(roomDataJson)}`);
 
       if (
         !roomDataJson.admin.premium_account &&
@@ -210,7 +249,7 @@ export class RoomsService {
       client.emit(RoomEvents.ENTER_ROOM, {
         roomData: roomDataJson,
         roomActivities,
-      });
+      });1
 
       for (let i = 0; i < roomDataJson.attendeesId.length; i++) {
         const receiverId = userIdToSocketId.get(roomDataJson.attendeesId[i]);

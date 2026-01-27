@@ -21,6 +21,7 @@ import { ChatDto } from './dto/chat.dto';
 import { JwtService } from '@nestjs/jwt';
 import { YtService } from './yt/yt.service';
 import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service';
+import { AccessService } from 'src/lib/access/access.service';
 
 @WebSocketGateway({
   namespace: '/room',
@@ -42,6 +43,7 @@ export class RoomsGateway
     private readonly redisService: RedisService,
     private readonly roomsService: RoomsService,
     private readonly ytService: YtService,
+    private readonly accessService: AccessService,
   ) {}
 
   async afterInit(server: Server) {
@@ -79,8 +81,8 @@ export class RoomsGateway
     try {
       await sub.subscribe('room:activate');
       sub.on('message', async (channel, message) => {
-        const { roomId } = JSON.parse(message);
-        await this.roomSchedulerService.activateRoom(roomId);
+        const { roomId, duration } = JSON.parse(message);
+        await this.roomSchedulerService.activateRoom(roomId, duration);
       });
     } catch (error) {
       Logger.error(error);

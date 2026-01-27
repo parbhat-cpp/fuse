@@ -19,6 +19,8 @@ export enum RoomEvents {
   SEND_MESSAGE = 'send-message',
   SET_ACTIVITY = 'set-activity',
   LOAD_ACTIVITY = 'load-activity',
+  PLAN_EXPIRED = 'plan-expired',
+  ACCESS_DENIED = 'access-denied',
 }
 
 export enum YTEvents {
