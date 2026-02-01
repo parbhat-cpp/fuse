@@ -43,11 +43,16 @@ func main() {
 	paymentService := services.NewPaymentService(query, dbPool)
 	paymentHandler := handlers.NewPaymentHandler(paymentService)
 
+	// usage handling
+	usageService := services.NewUsageService(query)
+	usageHandler := handlers.NewUsageHandler(usageService)
+
 	routes := []handlers.Route{}
 
 	// add routes for subscription v1
 	routes = append(routes, handlers.AccessRoutes(accessHandler)...)
 	routes = append(routes, handlers.PaymentRoutes(paymentHandler)...)
+	routes = append(routes, handlers.UsageRoutes(usageHandler)...)
 
 	handlers.RegisterRoutes(apiV1, routes)
 

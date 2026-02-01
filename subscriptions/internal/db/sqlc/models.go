@@ -5,6 +5,8 @@
 package sqlc
 
 import (
+	"encoding/json"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -40,7 +42,7 @@ type SubscriptionUsage struct {
 	UserID         pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
-	Usage          []byte
+	Usage          json.RawMessage
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
 }

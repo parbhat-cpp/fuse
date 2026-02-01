@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -30,7 +31,7 @@ type CreateSubscriptionUsageRow struct {
 	SubscriptionID   pgtype.UUID
 	ValidFrom        pgtype.Timestamptz
 	ValidUntil       pgtype.Timestamptz
-	Usage            []byte
+	Usage            json.RawMessage
 	SubscriptionID_2 pgtype.UUID
 }
 
@@ -56,7 +57,7 @@ func (q *Queries) CreateSubscriptionUsage(ctx context.Context, arg CreateSubscri
 
 const getAllSubscriptionUsage = `-- name: GetAllSubscriptionUsage :many
 SELECT id, subscription_id, valid_from, valid_until, usage
-FROM subscription_usage WHERE user_id = $1
+FROM subscription_usage WHERE user_id = $1 ORDER BY created_at DESC
 `
 
 type GetAllSubscriptionUsageRow struct {
@@ -64,7 +65,7 @@ type GetAllSubscriptionUsageRow struct {
 	SubscriptionID pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
-	Usage          []byte
+	Usage          json.RawMessage
 }
 
 func (q *Queries) GetAllSubscriptionUsage(ctx context.Context, userID pgtype.UUID) ([]GetAllSubscriptionUsageRow, error) {
@@ -93,9 +94,52 @@ func (q *Queries) GetAllSubscriptionUsage(ctx context.Context, userID pgtype.UUI
 	return items, nil
 }
 
+const getAllSubscriptionUsageWithSubscription = `-- name: GetAllSubscriptionUsageWithSubscription :many
+SELECT su.id, su.valid_from, su.valid_until, su.usage, s.id AS subscription_id, s.plan_type
+FROM subscription_usage AS su
+LEFT JOIN subscriptions AS s ON s.id = su.subscription_id 
+WHERE su.user_id = $1 ORDER BY su.created_at DESC
+`
+
+type GetAllSubscriptionUsageWithSubscriptionRow struct {
+	ID             pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Usage          json.RawMessage
+	SubscriptionID pgtype.UUID
+	PlanType       pgtype.Text
+}
+
+func (q *Queries) GetAllSubscriptionUsageWithSubscription(ctx context.Context, userID pgtype.UUID) ([]GetAllSubscriptionUsageWithSubscriptionRow, error) {
+	rows, err := q.db.Query(ctx, getAllSubscriptionUsageWithSubscription, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllSubscriptionUsageWithSubscriptionRow
+	for rows.Next() {
+		var i GetAllSubscriptionUsageWithSubscriptionRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.Usage,
+			&i.SubscriptionID,
+			&i.PlanType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCurrentSubscriptionUsageByUserID = `-- name: GetCurrentSubscriptionUsageByUserID :one
 SELECT id, subscription_id, valid_from, valid_until, usage
-FROM subscription_usage WHERE user_id = $1 AND valid_from <= NOW() AND valid_until >= NOW()
+FROM subscription_usage WHERE user_id = $1 AND valid_from <= NOW() AND valid_until >= NOW() ORDER BY created_at DESC LIMIT 1
 `
 
 type GetCurrentSubscriptionUsageByUserIDRow struct {
@@ -103,7 +147,7 @@ type GetCurrentSubscriptionUsageByUserIDRow struct {
 	SubscriptionID pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
-	Usage          []byte
+	Usage          json.RawMessage
 }
 
 func (q *Queries) GetCurrentSubscriptionUsageByUserID(ctx context.Context, userID pgtype.UUID) (GetCurrentSubscriptionUsageByUserIDRow, error) {
@@ -119,6 +163,36 @@ func (q *Queries) GetCurrentSubscriptionUsageByUserID(ctx context.Context, userI
 	return i, err
 }
 
+const getCurrentSubscriptionUsageWithSubscriptionByUserID = `-- name: GetCurrentSubscriptionUsageWithSubscriptionByUserID :one
+SELECT su.id, su.valid_from, su.valid_until, su.usage, s.id AS subscription_id, s.plan_type
+FROM subscription_usage AS su
+INNER JOIN subscriptions AS s ON s.id = su.subscription_id 
+WHERE su.user_id = $1 AND su.valid_from <= NOW() AND su.valid_until >= NOW() ORDER BY su.created_at DESC LIMIT 1
+`
+
+type GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow struct {
+	ID             pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Usage          json.RawMessage
+	SubscriptionID pgtype.UUID
+	PlanType       string
+}
+
+func (q *Queries) GetCurrentSubscriptionUsageWithSubscriptionByUserID(ctx context.Context, userID pgtype.UUID) (GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, getCurrentSubscriptionUsageWithSubscriptionByUserID, userID)
+	var i GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.Usage,
+		&i.SubscriptionID,
+		&i.PlanType,
+	)
+	return i, err
+}
+
 const getSubscriptionUsageByID = `-- name: GetSubscriptionUsageByID :one
 SELECT id, subscription_id, valid_from, valid_until, usage
 FROM subscription_usage WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1
@@ -129,7 +203,7 @@ type GetSubscriptionUsageByIDRow struct {
 	SubscriptionID pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
-	Usage          []byte
+	Usage          json.RawMessage
 }
 
 func (q *Queries) GetSubscriptionUsageByID(ctx context.Context, userID pgtype.UUID) (GetSubscriptionUsageByIDRow, error) {
@@ -162,7 +236,7 @@ type UpdateSubscriptionUsageRow struct {
 	SubscriptionID pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
-	Usage          []byte
+	Usage          json.RawMessage
 }
 
 func (q *Queries) UpdateSubscriptionUsage(ctx context.Context, arg UpdateSubscriptionUsageParams) (UpdateSubscriptionUsageRow, error) {
@@ -196,7 +270,7 @@ type UpdateSubscriptionUsageDurationRow struct {
 	SubscriptionID pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
-	Usage          []byte
+	Usage          json.RawMessage
 }
 
 func (q *Queries) UpdateSubscriptionUsageDuration(ctx context.Context, arg UpdateSubscriptionUsageDurationParams) (UpdateSubscriptionUsageDurationRow, error) {
