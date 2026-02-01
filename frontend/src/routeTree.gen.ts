@@ -16,8 +16,8 @@ import { Route as AppSubscriptionRouteImport } from './routes/app/subscription'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppRoomsRouteImport } from './routes/app/rooms'
 import { Route as AppRoomRouteImport } from './routes/app/room'
-import { Route as AppFriendsRouteImport } from './routes/app/friends'
 import { Route as AuthCallbackIndexRouteImport } from './routes/auth/callback/index'
+import { Route as AppSubscriptionIndexRouteImport } from './routes/app/subscription/index'
 import { Route as AppRoomIndexRouteImport } from './routes/app/room/index'
 
 const AppRoute = AppRouteImport.update({
@@ -55,15 +55,15 @@ const AppRoomRoute = AppRoomRouteImport.update({
   path: '/room',
   getParentRoute: () => AppRoute,
 } as any)
-const AppFriendsRoute = AppFriendsRouteImport.update({
-  id: '/friends',
-  path: '/friends',
-  getParentRoute: () => AppRoute,
-} as any)
 const AuthCallbackIndexRoute = AuthCallbackIndexRouteImport.update({
   id: '/auth/callback/',
   path: '/auth/callback/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSubscriptionIndexRoute = AppSubscriptionIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSubscriptionRoute,
 } as any)
 const AppRoomIndexRoute = AppRoomIndexRouteImport.update({
   id: '/',
@@ -74,36 +74,35 @@ const AppRoomIndexRoute = AppRoomIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/app/friends': typeof AppFriendsRoute
   '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/subscription': typeof AppSubscriptionRoute
+  '/app/subscription': typeof AppSubscriptionRouteWithChildren
   '/app/': typeof AppIndexRoute
   '/app/room/': typeof AppRoomIndexRoute
+  '/app/subscription/': typeof AppSubscriptionIndexRoute
   '/auth/callback': typeof AuthCallbackIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app/friends': typeof AppFriendsRoute
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/subscription': typeof AppSubscriptionRoute
   '/app': typeof AppIndexRoute
   '/app/room': typeof AppRoomIndexRoute
+  '/app/subscription': typeof AppSubscriptionIndexRoute
   '/auth/callback': typeof AuthCallbackIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/app/friends': typeof AppFriendsRoute
   '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/subscription': typeof AppSubscriptionRoute
+  '/app/subscription': typeof AppSubscriptionRouteWithChildren
   '/app/': typeof AppIndexRoute
   '/app/room/': typeof AppRoomIndexRoute
+  '/app/subscription/': typeof AppSubscriptionIndexRoute
   '/auth/callback/': typeof AuthCallbackIndexRoute
 }
 export interface FileRouteTypes {
@@ -111,35 +110,34 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/app/friends'
     | '/app/room'
     | '/app/rooms'
     | '/app/settings'
     | '/app/subscription'
     | '/app/'
     | '/app/room/'
+    | '/app/subscription/'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app/friends'
     | '/app/rooms'
     | '/app/settings'
-    | '/app/subscription'
     | '/app'
     | '/app/room'
+    | '/app/subscription'
     | '/auth/callback'
   id:
     | '__root__'
     | '/'
     | '/app'
-    | '/app/friends'
     | '/app/room'
     | '/app/rooms'
     | '/app/settings'
     | '/app/subscription'
     | '/app/'
     | '/app/room/'
+    | '/app/subscription/'
     | '/auth/callback/'
   fileRoutesById: FileRoutesById
 }
@@ -200,19 +198,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRoomRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/friends': {
-      id: '/app/friends'
-      path: '/friends'
-      fullPath: '/app/friends'
-      preLoaderRoute: typeof AppFriendsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/auth/callback/': {
       id: '/auth/callback/'
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/subscription/': {
+      id: '/app/subscription/'
+      path: '/'
+      fullPath: '/app/subscription/'
+      preLoaderRoute: typeof AppSubscriptionIndexRouteImport
+      parentRoute: typeof AppSubscriptionRoute
     }
     '/app/room/': {
       id: '/app/room/'
@@ -235,21 +233,31 @@ const AppRoomRouteChildren: AppRoomRouteChildren = {
 const AppRoomRouteWithChildren =
   AppRoomRoute._addFileChildren(AppRoomRouteChildren)
 
+interface AppSubscriptionRouteChildren {
+  AppSubscriptionIndexRoute: typeof AppSubscriptionIndexRoute
+}
+
+const AppSubscriptionRouteChildren: AppSubscriptionRouteChildren = {
+  AppSubscriptionIndexRoute: AppSubscriptionIndexRoute,
+}
+
+const AppSubscriptionRouteWithChildren = AppSubscriptionRoute._addFileChildren(
+  AppSubscriptionRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppFriendsRoute: typeof AppFriendsRoute
   AppRoomRoute: typeof AppRoomRouteWithChildren
   AppRoomsRoute: typeof AppRoomsRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  AppSubscriptionRoute: typeof AppSubscriptionRoute
+  AppSubscriptionRoute: typeof AppSubscriptionRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppFriendsRoute: AppFriendsRoute,
   AppRoomRoute: AppRoomRouteWithChildren,
   AppRoomsRoute: AppRoomsRoute,
   AppSettingsRoute: AppSettingsRoute,
-  AppSubscriptionRoute: AppSubscriptionRoute,
+  AppSubscriptionRoute: AppSubscriptionRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }
 

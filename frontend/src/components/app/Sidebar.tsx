@@ -33,12 +33,6 @@ const Sidebar = () => {
                     currentPath={path}
                 />
                 <SidebarButton
-                    to='/app/friends'
-                    icon={<FaUserGroup size={25} />}
-                    text='Friends'
-                    currentPath={path}
-                />
-                <SidebarButton
                     to='/app/subscription'
                     icon={<AiFillDollarCircle size={25} />}
                     text='Subscription'
