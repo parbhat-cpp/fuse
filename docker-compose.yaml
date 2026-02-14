@@ -7,6 +7,15 @@ services:
       - "80:80"
     networks:
       - backend_fuse-network
+      - notifications_notifications-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx-logs:/etc/nginx/logs
+    command: [nginx, '-g', 'daemon off;']
+volumes:
+  nginx-logs:
 networks:
   backend_fuse-network:
+    external: true
+  notifications_notifications-network:
     external: true
