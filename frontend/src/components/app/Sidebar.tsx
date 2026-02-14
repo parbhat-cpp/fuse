@@ -3,7 +3,6 @@ import PrimaryButton from '../common/PrimaryButton'
 import SidebarButton from './SidebarButton'
 import { IoHomeSharp } from "react-icons/io5";
 import { MdMeetingRoom } from "react-icons/md";
-import { FaUserGroup } from "react-icons/fa6";
 import { AiFillDollarCircle } from "react-icons/ai";
 import { IoSettingsSharp } from "react-icons/io5";
 import { useLocation } from '@tanstack/react-router';

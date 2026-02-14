@@ -33,6 +33,15 @@ function RouteComponent() {
       config={{
         room: {
           url: `${WS_URL}/room`,
+          options: {
+            path: '/main-socket/'
+          }
+        },
+        notification: {
+          url: `${WS_URL}/notification`,
+          options: {
+            path: '/notification-socket/',
+          },
         },
       }}
     >
