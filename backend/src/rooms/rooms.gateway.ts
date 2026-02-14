@@ -24,6 +24,7 @@ import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service'
 import { AccessService } from 'src/lib/access/access.service';
 
 @WebSocketGateway({
+  path: '/main-socket/',
   namespace: '/room',
   cors: {
     origin: '*',

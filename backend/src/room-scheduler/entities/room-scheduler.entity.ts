@@ -46,6 +46,7 @@ export class RoomScheduler {
   @Column({
     type: 'timestamptz',
     default: () => 'now()',
+    onUpdate: 'now()',
   })
   updated_at: Date;
 }
