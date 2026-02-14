@@ -1,0 +1,17 @@
+services:
+  inapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inapp-notifications-worker
+    restart: always
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    networks:
+      - notifications_notifications-network
+
+networks:
+  notifications_notifications-network:
+    external: true
