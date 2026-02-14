@@ -1,0 +1,31 @@
+services:
+  notifications:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: notifications-prod
+    environment:
+      NODE_ENV: production
+    ports:
+      - 8000:3000
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - notifications-network
+  redis:
+    image: redis:7-alpine
+    env_file:
+      - .env
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0
+    volumes:
+      - redis-data:/data
+    networks:
+      - notifications-network
+volumes:
+  redis-data:
+networks:
+  notifications-network:
+    driver: bridge
