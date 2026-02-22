@@ -18,14 +18,14 @@ import { Server, Socket } from 'socket.io';
     origin: '*',
   },
 })
-export class NotificationGateway implements OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect {
+export class NotificationGateway
+  implements OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
   private userIdToSocketIdMap: Map<string, string> = new Map();
 
-  afterInit(server: any) {
-    
-  }
+  afterInit(server: any) {}
 
   handleConnection(client: Socket) {
     Logger.log(`Client connected: ${client.id}`);

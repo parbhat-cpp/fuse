@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -17,6 +18,7 @@ import type { UUID } from 'node:crypto';
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
+  // to be used by other services to push notifications to users
   @Post('notify')
   async notify(
     @Body()
@@ -41,6 +43,7 @@ export class NotificationController {
     );
   }
 
+  // to be used by other services to save notifications
   @Post('save')
   async saveNotification(
     @Body()
@@ -63,13 +66,29 @@ export class NotificationController {
     );
   }
 
-  @Get('history')
-  async history(@Req() request: Request) {
-    const userId = request.headers['X-User-Id'] as UUID;
-    if (!userId) {
-      throw new BadRequestException('Missing x-user-id header');
-    }
-    return await this.notificationService.getNotificationHistory(userId);
+  @Get('sync')
+  async syncNotifications(
+    @Req() request: Request,
+    @Query('cursor') cursor: string,
+  ) {
+    const userId = request.headers['x-user-id'] as UUID;
+    if (!userId) throw new BadRequestException('Missing x-user-id header');
+    return await this.notificationService.syncNotifications(userId, cursor);
+  }
+
+  @Get()
+  async getNotification(
+    @Req() request: Request,
+    @Query('cursor') cursor?: string,
+    @Query('limit', ParseIntPipe) limit = 10,
+  ) {
+    const userId = request.headers['x-user-id'] as UUID;
+    if (!userId) throw new BadRequestException('Missing x-user-id header');
+    return await this.notificationService.getNotifications(
+      userId,
+      cursor,
+      limit,
+    );
   }
 
   @Patch('mark-as-read')
@@ -88,7 +107,7 @@ export class NotificationController {
 
   @Patch('mark-all-as-read')
   async markAllAsRead(@Req() request: Request) {
-    const userId = request.headers['X-User-Id'] as UUID;
+    const userId = request.headers['x-user-id'] as UUID;
     if (!userId) {
       throw new BadRequestException('Missing x-user-id header');
     }

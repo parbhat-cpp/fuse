@@ -11,6 +11,7 @@ import { Notification } from './entities/notification.entity';
 import { Template } from 'src/template/entities/template.entity';
 import { UUID } from 'node:crypto';
 import { NotificationGateway } from './notification.gateway';
+import { formatNotification } from 'src/utils/format';
 
 @Injectable()
 export class NotificationService {
@@ -34,7 +35,14 @@ export class NotificationService {
     templateId: UUID,
   ) {
     if (channels.includes(NOTIFICATION_TYPE_IN_APP)) {
-      return await this.pushInApp(userId, title, message, data, type, templateId);
+      return await this.pushInApp(
+        userId,
+        title,
+        message,
+        data,
+        type,
+        templateId,
+      );
     }
     if (channels.includes(NOTIFICATION_TYPE_EMAIL)) {
       return await this.pushEmail(
@@ -118,7 +126,10 @@ export class NotificationService {
 
   async markAsRead(notificationId: UUID) {
     try {
-      const updatedNotification = await this.notificationRepository.update({ id: notificationId }, { read: true });
+      const updatedNotification = await this.notificationRepository.update(
+        { id: notificationId },
+        { read: true },
+      );
       return { success: true, data: updatedNotification };
     } catch (error) {
       this.logger.error('Failed to mark notification as read', error);
@@ -128,7 +139,9 @@ export class NotificationService {
 
   async deleteNotification(notificationId: UUID) {
     try {
-      const deleteResult = await this.notificationRepository.delete({ id: notificationId });
+      const deleteResult = await this.notificationRepository.delete({
+        id: notificationId,
+      });
       return { success: true, data: deleteResult };
     } catch (error) {
       this.logger.error('Failed to delete notification', error);
@@ -193,24 +206,79 @@ export class NotificationService {
     }
   }
 
-  async getNotificationHistory(userId: UUID) {
+  async syncNotifications(userId: UUID, cursor: string) {
     try {
-      const notifications = await this.notificationRepository
+      const qb = this.notificationRepository
         .createQueryBuilder('n')
-        .select([
-          'JSON_AGG(n order by n.created_at) as notifications',
-          'JSON_AGG(t order by t.created_at) as templates',
-        ])
-        .addSelect('DATE(n.created_at)', 'created_date')
-        .innerJoin(Template, 't', 'n.template_id = t.id')
-        .where('n.recipient_id = :userId', { userId })
-        .groupBy('created_date')
-        .orderBy('created_date', 'DESC')
-        .getRawMany();
-      return notifications;
+        .innerJoinAndSelect('n.template', 't')
+        .where('n.recipient_id = :userId', { userId });
+
+      if (cursor) {
+        qb.andWhere(
+          `
+            n.created_at > :cursorCreatedAt OR (n.created_at = :cursorCreatedAt AND n.id > :cursorId)
+          `,
+          {
+            cursorCreatedAt: cursor.split('_')[0],
+            cursorId: cursor.split('_')[1],
+          },
+        );
+      }
+
+      const rows = await qb
+        .orderBy('n.created_at', 'ASC')
+        .addOrderBy('n.id', 'ASC')
+        .limit(100)
+        .getMany();
+
+      return {
+        data: formatNotification(rows),
+      };
     } catch (error) {
-      this.logger.error('Failed to get notification history', error);
-      return [];
+      return { error: error.message };
+    }
+  }
+
+  async getNotifications(userId: UUID, cursor?: string, limit: number = 10) {
+    try {
+      const qb = this.notificationRepository
+        .createQueryBuilder('n')
+        .innerJoinAndSelect('n.template', 't')
+        .where('n.recipient_id = :userId', { userId });
+
+      if (cursor) {
+        qb.andWhere(
+          `
+          (n.created_at < :cursorCreatedAt)
+          OR (
+            n.created_at = :cursorCreatedAt
+            AND n.id < :cursorId
+          )
+        `,
+          {
+            cursorCreatedAt: cursor.split('_')[0],
+            cursorId: cursor.split('_')[1],
+          },
+        );
+      }
+
+      const rows = await qb
+        .orderBy('n.created_at', 'DESC')
+        .addOrderBy('n.id', 'DESC')
+        .limit(limit)
+        .getMany();
+
+      const last = rows[rows.length - 1];
+
+      const nextCursor = `${last.created_at.toISOString()}_${last.id}`;
+
+      return {
+        data: formatNotification(rows),
+        nextCursor,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get notifications', error);
+      return { data: [], nextCursor: null };
     }
   }
 }
