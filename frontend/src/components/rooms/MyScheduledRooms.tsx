@@ -23,7 +23,6 @@ export default function MyScheduledRooms() {
         },
       },
     )
-    // setVisitedPages((prev) => new Set([...prev, Number(pageParam)]))
     return res.json()
   }
 

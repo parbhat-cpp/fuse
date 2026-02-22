@@ -11,6 +11,15 @@ export function toLocalDate(date: string) {
   return localDate
 }
 
+export function getDate(date: string) {
+  const localDate = new Date(date)
+  const year = localDate.getFullYear()
+  const month = String(localDate.getMonth() + 1).padStart(2, '0')
+  const day = String(localDate.getDate()).padStart(2, '0')
+
+  return `${day}-${month}-${year}`;
+}
+
 export function getLocalTime(date: string) {
   const localDate = new Date(date)
 

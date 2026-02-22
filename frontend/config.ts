@@ -1,6 +1,7 @@
 export const BASE_URL = import.meta.env.VITE_BASE_URL
 export const API_URL = `${BASE_URL}/api`
 export const SUBSCRIPTION_URL = `${BASE_URL}/subscription/v1`
+export const NOTIFICATION_URL = `${BASE_URL}/notifications`
 export const WS_URL = `${BASE_URL}`
 export const MEDIASOUP_URL = import.meta.env.VITE_MEDIASOUP_URL
 export const ENV = import.meta.env.NODE_ENV
