@@ -13,12 +13,16 @@ export default function Header() {
   const navigate = useNavigate();
 
   const handleGoogleSignin = async () => {
-    await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
-    });
+    try {
+      await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+    } catch (error) {
+      console.error("Error signing in with Google:", error);
+    }
   }
 
   return (
