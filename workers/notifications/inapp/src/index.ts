@@ -1,5 +1,8 @@
 import { Worker } from 'bullmq';
 import { Redis } from 'ioredis';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // redis connection
 const redisConn = new Redis({
