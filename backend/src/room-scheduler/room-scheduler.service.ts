@@ -38,6 +38,7 @@ export class RoomSchedulerService {
     await this.queue.add(
       'room:activate',
       {
+        adminId: roomData.admin.id,
         roomId,
         startAt: roomData.startAt.toISOString(),
         duration: delayInMins,
@@ -108,7 +109,7 @@ export class RoomSchedulerService {
 
     await this.queue.add(
       'room:terminate',
-      { roomId },
+      { roomId, adminId: roomData.admin.id },
       {
         delay,
         removeOnComplete: true,

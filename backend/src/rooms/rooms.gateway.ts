@@ -21,7 +21,7 @@ import { ChatDto } from './dto/chat.dto';
 import { JwtService } from '@nestjs/jwt';
 import { YtService } from './yt/yt.service';
 import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service';
-import { AccessService } from 'src/lib/access/access.service';
+import { NotificationsService } from 'src/lib/notifications/notifications.service';
 
 @WebSocketGateway({
   path: '/main-socket/',
@@ -44,7 +44,7 @@ export class RoomsGateway
     private readonly redisService: RedisService,
     private readonly roomsService: RoomsService,
     private readonly ytService: YtService,
-    private readonly accessService: AccessService,
+    private readonly notificationService: NotificationsService,
   ) {}
 
   async afterInit(server: Server) {
@@ -82,8 +82,16 @@ export class RoomsGateway
     try {
       await sub.subscribe('room:activate');
       sub.on('message', async (channel, message) => {
-        const { roomId, duration } = JSON.parse(message);
+        const { roomId, duration, adminId } = JSON.parse(message);
         await this.roomSchedulerService.activateRoom(roomId, duration);
+        await this.notificationService.sendNotification(
+          adminId,
+          'Your room is now active!',
+          `It will be active for the next ${duration} minutes.`,
+          { id: roomId },
+          ['in-app', 'email'],
+          'ROOM_ACTIVATE',
+        );
       });
     } catch (error) {
       Logger.error(error);
@@ -93,8 +101,17 @@ export class RoomsGateway
     try {
       await sub.subscribe('room:terminate');
       sub.on('message', async (channel, message) => {
-        const { roomId } = JSON.parse(message);
+        const { roomId, adminId } = JSON.parse(message);
         await this.roomSchedulerService.terminateRoom(roomId);
+
+        await this.notificationService.sendNotification(
+          adminId,
+          'Your room has ended!',
+          'Your room has been terminated.',
+          { id: roomId },
+          ['in-app', 'email'],
+          'ROOM_ENDED',
+        );
 
         const { exists, roomData } = await this.roomsService.roomExists(
           roomId,

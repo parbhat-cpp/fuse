@@ -5,6 +5,7 @@ import { RoomsService } from './rooms.service';
 import { YtService } from './yt/yt.service';
 import { RoomSchedulerModule } from 'src/room-scheduler/room-scheduler.module';
 import { AccessService } from 'src/lib/access/access.service';
+import { NotificationsService } from 'src/lib/notifications/notifications.service';
 
 @Module({
   imports: [RoomSchedulerModule],
@@ -14,6 +15,7 @@ import { AccessService } from 'src/lib/access/access.service';
     RoomsService,
     YtService,
     AccessService,
+    NotificationsService,
   ],
 })
 export class RoomsModule {}

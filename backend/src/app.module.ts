@@ -8,6 +8,7 @@ import { RoomsModule } from './rooms/rooms.module';
 import { RoomSchedulerModule } from './room-scheduler/room-scheduler.module';
 import { RoomSearchModule } from './room-search/room-search.module';
 import { AccessService } from './lib/access/access.service';
+import { NotificationsService } from './lib/notifications/notifications.service';
 import 'dotenv/config';
 
 @Module({
@@ -30,6 +31,6 @@ import 'dotenv/config';
     RoomSearchModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AccessService],
+  providers: [AppService, AccessService, NotificationsService],
 })
 export class AppModule {}

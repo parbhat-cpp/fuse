@@ -14,6 +14,7 @@ import { UserType } from 'src/user/entities/user.entity';
 import { roomActivities } from './config';
 import { RoomSchedulerService } from 'src/room-scheduler/room-scheduler.service';
 import { AccessService } from 'src/lib/access/access.service';
+import { NotificationsService } from 'src/lib/notifications/notifications.service';
 
 @Injectable()
 export class RoomsService {
@@ -21,6 +22,7 @@ export class RoomsService {
     private readonly roomSchedulerService: RoomSchedulerService,
     private readonly redisService: RedisService,
     private readonly accessService: AccessService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async roomExists(roomId: string, userId: string) {
@@ -135,6 +137,16 @@ export class RoomsService {
         roomId: resData.roomId,
         startAt: resData.startAt,
       });
+
+      await this.notificationsService.sendNotification(
+        payload.admin.id,
+        `Room scheduled: ${resData.roomName}`,
+        'Your room has been scheduled successfully.',
+        {id: roomId, name: resData.roomName, startAt: resData.startAt},
+        ['in-app', 'email'],
+        'ROOM_SCHEDULED',
+      );
+
       return;
     }
 
