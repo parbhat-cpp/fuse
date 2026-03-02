@@ -12,6 +12,7 @@ type Config struct {
 	PORT                  string
 	RAZORPAY_API_KEY      string
 	RAZORPAY_API_SECRET   string
+	NOTIFICATION_URL      string
 }
 
 func LoadEnv() *Config {
@@ -28,5 +29,7 @@ func LoadEnv() *Config {
 
 		RAZORPAY_API_KEY:    os.Getenv("RAZORPAY_API_KEY"),
 		RAZORPAY_API_SECRET: os.Getenv("RAZORPAY_API_SECRET"),
+
+		NOTIFICATION_URL: os.Getenv("NOTIFICATION_URL"),
 	}
 }

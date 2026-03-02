@@ -13,6 +13,7 @@ import (
 	"github.com/parbhat-cpp/fuse/subscriptions/internal/config"
 	"github.com/parbhat-cpp/fuse/subscriptions/internal/db/sqlc"
 	"github.com/parbhat-cpp/fuse/subscriptions/internal/types"
+	"github.com/parbhat-cpp/fuse/subscriptions/lib"
 	"github.com/parbhat-cpp/fuse/subscriptions/pkg/utils"
 )
 
@@ -165,6 +166,20 @@ func (s *PaymentService) VerifyPayment(user_id uuid.UUID, plan_type string, orde
 		refund_flag = true
 		return nil, fmt.Errorf("Failed to commit transaction")
 	}
+
+	lib.SendNotification(
+		user_uuid.String(),
+		"Upgraded to "+sub_row.PlanType+" Successfully",
+		"",
+		map[string]interface{}{
+			"plan_type":   sub_row.PlanType,
+			"valid_until": sub_row.ValidUntil.Time.Format(time.RFC3339),
+			"valid_from":  sub_row.ValidFrom.Time.Format(time.RFC3339),
+			"plan_info":   constants.GetPlans()[sub_row.PlanType],
+		},
+		[]string{"in-app", "email"},
+		"NEW_SUBSCRIPTION",
+	)
 
 	return sub_row, nil
 }
