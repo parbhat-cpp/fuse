@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import type { UUID } from 'node:crypto';
+import { NOTIFICATION_TYPE } from 'src/template/types';
 
 @Controller()
 export class NotificationController {
@@ -27,9 +28,8 @@ export class NotificationController {
       title: string;
       message: string;
       data: any;
-      type: string;
       channels: string[];
-      templateId: UUID;
+      tag: string;
     },
   ) {
     await this.notificationService.pushNotification(
@@ -37,9 +37,8 @@ export class NotificationController {
       body.title,
       body.message,
       body.data,
-      body.type,
       body.channels,
-      body.templateId,
+      body.tag,
     );
   }
 
@@ -52,7 +51,7 @@ export class NotificationController {
       title: string;
       message: string;
       data: any;
-      type: string;
+      type: NOTIFICATION_TYPE;
       templateId: UUID;
     },
   ) {

@@ -1,5 +1,7 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import type { UUID } from 'node:crypto';
+import { NOTIFICATION_TYPE } from '../types';
+import { TemplateTag } from './template-tag.entity';
 
 @Entity({ name: 'templates' })
 export class Template {
@@ -12,9 +14,13 @@ export class Template {
 
   @Column({
     type: 'enum',
-    enum: ['email', 'push'],
+    enum: NOTIFICATION_TYPE,
   })
-  type: 'email' | 'push';
+  type: NOTIFICATION_TYPE;
+
+  @ManyToOne(() => TemplateTag, { eager: true })
+  @JoinColumn({ name: 'tag_id' })
+  tag: TemplateTag;
 
   @Column()
   content: string;

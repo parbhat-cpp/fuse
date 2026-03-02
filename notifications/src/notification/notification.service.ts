@@ -12,6 +12,15 @@ import { Template } from 'src/template/entities/template.entity';
 import { UUID } from 'node:crypto';
 import { NotificationGateway } from './notification.gateway';
 import { formatNotification } from 'src/utils/format';
+import { NOTIFICATION_TYPE, TAGS } from 'src/template/types';
+import { RedisService } from 'src/redis/redis.service';
+
+/**
+ * 1. implement libs for notification server -
+ * 2. add socket events -
+ * 3. sync fe
+ * 4. update notification cache realtime
+ */
 
 @Injectable()
 export class NotificationService {
@@ -22,35 +31,69 @@ export class NotificationService {
     @InjectQueue(NOTIFICATION_TYPE_EMAIL) private emailQueue: Queue,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private readonly templateRepository: Repository<Template>,
     private readonly notificationGateway: NotificationGateway,
+    private readonly redisClient: RedisService,
   ) {}
+
+  async getTemplateIdByTag(type: string, tag: string): Promise<UUID> {
+    const templateCacheKey = `template:${type}:${tag}`;
+    const templateExists =
+      await this.redisClient.redis.exists(templateCacheKey);
+
+    if (templateExists) {
+      const cachedTemplateId =
+        await this.redisClient.redis.get(templateCacheKey);
+      if (cachedTemplateId) {
+        return cachedTemplateId as UUID;
+      }
+    }
+
+    const template = await this.templateRepository.findOne({
+      where: {
+        type: type as NOTIFICATION_TYPE,
+        tag: {
+            tag,
+          },
+        },
+      },
+    );
+
+    if (!template) {
+      throw new Error(`Template with tag ${tag} not found`);
+    }
+
+    await this.redisClient.redis.set(templateCacheKey, template.id);
+    return template.id;
+  }
 
   async pushNotification(
     userId: UUID,
     title: string,
     message: string,
     data: any,
-    type: string,
     channels: string[],
-    templateId: UUID,
+    tag: string,
   ) {
     if (channels.includes(NOTIFICATION_TYPE_IN_APP)) {
+      const templateId = await this.getTemplateIdByTag(NOTIFICATION_TYPE_IN_APP, tag);
       return await this.pushInApp(
         userId,
         title,
         message,
         data,
-        type,
+        NOTIFICATION_TYPE_IN_APP,
         templateId,
       );
     }
     if (channels.includes(NOTIFICATION_TYPE_EMAIL)) {
+      const templateId = await this.getTemplateIdByTag(NOTIFICATION_TYPE_EMAIL, tag);
       return await this.pushEmail(
         userId,
         title,
         message,
         data,
-        type,
+        NOTIFICATION_TYPE_EMAIL,
         templateId,
       );
     }
@@ -270,7 +313,9 @@ export class NotificationService {
 
       const last = rows[rows.length - 1];
 
-      const nextCursor = `${last.created_at.toISOString()}_${last.id}`;
+      const nextCursor = last
+        ? `${last.created_at.toISOString()}_${last.id}`
+        : null;
 
       return {
         data: formatNotification(rows),

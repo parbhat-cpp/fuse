@@ -10,6 +10,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
 import { Template } from 'src/template/entities/template.entity';
 import { NotificationGateway } from './notification.gateway';
+import { RedisService } from 'src/redis/redis.service';
+import { TemplateTag } from 'src/template/entities/template-tag.entity';
 
 @Module({
   imports: [
@@ -21,9 +23,9 @@ import { NotificationGateway } from './notification.gateway';
         name: NOTIFICATION_TYPE_EMAIL,
       },
     ),
-    TypeOrmModule.forFeature([Notification, Template]),
+    TypeOrmModule.forFeature([Notification, Template, TemplateTag]),
   ],
   controllers: [NotificationController],
-  providers: [NotificationService, NotificationGateway],
+  providers: [NotificationService, NotificationGateway, RedisService],
 })
 export class NotificationModule {}
