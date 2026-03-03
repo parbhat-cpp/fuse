@@ -16,6 +16,7 @@ class TemplateCLI():
         self.app.command('delete')(self.delete)
         self.app.command('list')(self.list)
         self.app.command('update')(self.update)
+        self.app.command('get')(self.get)
         self.cur = self.conn.cursor()
         
         # get all template tags for validation
@@ -166,3 +167,17 @@ class TemplateCLI():
                 typer.echo("\nTemplate updated successfully.")
         except Exception as e:
             typer.echo(f"Error updating template: {e}", err=True)
+    
+    def get(self):
+        try:
+            template_id = typer.prompt("Template ID?")
+            self.cur.execute("SELECT t.content, tt.tag FROM templates t inner join template_tags tt on t.tag_id = tt.id WHERE t.id = %s", (template_id,))
+            template = self.cur.fetchone()
+            if template:
+                with open(f"./template/template_{template[1]}_{template_id}.html", 'w') as file:
+                    file.write(template[0])
+                typer.echo(f"Template saved to ./template/template_{template[1]}_{template_id}.html")
+            else:
+                typer.echo("Template not found.", err=True)
+        except Exception as e:
+            typer.echo(f"Error getting template: {e}", err=True)
