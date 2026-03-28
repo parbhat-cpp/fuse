@@ -22,11 +22,11 @@ export class AccessService {
         },
       );
 
-      if (accessResponse.ok) {
-        const accessData = await accessResponse.json();
-        return { success: true, data: accessData };
+      const accessData = await accessResponse.json();
+      if (!accessResponse.ok) {
+        return { success: false, data: accessData.data, error: accessData.error };
       }
-      return { success: false, data: null };
+      return { success: true, data: accessData };
     } catch (error) {
       return { success: false, error: error };
     }

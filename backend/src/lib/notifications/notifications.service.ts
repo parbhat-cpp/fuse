@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import 'dotenv/config';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class NotificationsService {
         message: string,
         data: any,
         channels: string[],
-        templateId: string,
+        tag: string,
     ) {
         try {
             const response = await fetch(`${this.notificationServiceUrl}/notify`, {
@@ -21,14 +21,15 @@ export class NotificationsService {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ userId, title, message, data, channels, templateId }),
+                body: JSON.stringify({ userId, title, message, data, channels, tag }),
             });
 
-            if (response.ok) {
-                return { success: true };
+            if (!response.ok) {
+                return { success: false };
             }
-            return { success: false };
+            return { success: true };
         } catch (error) {
+            Logger.error('Failed to send notification', error);
             return { success: false, error };
         }
     }

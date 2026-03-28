@@ -112,6 +112,9 @@ export class RoomsService {
         'schedule_room',
       );
 
+      Logger.log(`Access check result for scheduling room: ${JSON.stringify(data)}`);
+      Logger.error(`Access check error for scheduling room: ${JSON.stringify(error)}`);
+
       if (error) {
         client.emit(RoomEvents.ACCESS_DENIED);
         return;

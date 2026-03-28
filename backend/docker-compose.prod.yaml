@@ -20,10 +20,11 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      - redis-main
     networks:
       - fuse-network
-  redis:
+  redis-main:
+    container_name: redis-main
     image: redis:7-alpine
     env_file:
       - .env
