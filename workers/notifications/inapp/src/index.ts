@@ -14,9 +14,9 @@ const redisConn = new Redis({
 
 // define worker
 const worker = new Worker(
-  'in-app-notification',
+  'in-app',
     async (job) => {
-        const response = await fetch(`http://notifications-dev:8000/save`,{
+        const response = await fetch(`http://notifications-dev:3000/save`,{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
