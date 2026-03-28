@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TemplateModule } from './template/template.module';
 import { RedisService } from './redis/redis.service';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -14,6 +15,11 @@ import { RedisService } from './redis/redis.service';
       isGlobal: true,
     }),
     NotificationModule,
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET as string,
+      signOptions: { expiresIn: '60s' },
+    }),
     BullModule.forRootAsync({
       useFactory: () => ({
         connection: {

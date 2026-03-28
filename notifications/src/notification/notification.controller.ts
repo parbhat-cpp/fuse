@@ -32,7 +32,7 @@ export class NotificationController {
       tag: string;
     },
   ) {
-    await this.notificationService.pushNotification(
+    return await this.notificationService.pushNotification(
       body.userId,
       body.title,
       body.message,

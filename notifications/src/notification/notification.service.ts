@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import {
@@ -12,15 +12,8 @@ import { Template } from 'src/template/entities/template.entity';
 import { UUID } from 'node:crypto';
 import { NotificationGateway } from './notification.gateway';
 import { formatNotification } from 'src/utils/format';
-import { NOTIFICATION_TYPE, TAGS } from 'src/template/types';
+import { NOTIFICATION_TYPE } from 'src/template/types';
 import { RedisService } from 'src/redis/redis.service';
-
-/**
- * 1. implement libs for notification server -
- * 2. add socket events -
- * 3. sync fe
- * 4. update notification cache realtime
- */
 
 @Injectable()
 export class NotificationService {
@@ -31,10 +24,11 @@ export class NotificationService {
     @InjectQueue(NOTIFICATION_TYPE_EMAIL) private emailQueue: Queue,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    @InjectRepository(Template)
     private readonly templateRepository: Repository<Template>,
     private readonly notificationGateway: NotificationGateway,
     private readonly redisClient: RedisService,
-  ) {}
+  ) { }
 
   async getTemplateIdByTag(type: string, tag: string): Promise<UUID> {
     const templateCacheKey = `template:${type}:${tag}`;
@@ -53,10 +47,10 @@ export class NotificationService {
       where: {
         type: type as NOTIFICATION_TYPE,
         tag: {
-            tag,
-          },
+          tag,
         },
       },
+    },
     );
 
     if (!template) {
@@ -108,8 +102,16 @@ export class NotificationService {
     templateId: UUID,
   ) {
     try {
+      Logger.log({
+        userId,
+        title,
+        message,
+        data,
+        type,
+        templateId,
+      });
       await this.inAppQueue.add(
-        'in-app-notification',
+        NOTIFICATION_TYPE_IN_APP,
         {
           userId,
           title,
@@ -143,7 +145,7 @@ export class NotificationService {
   ) {
     try {
       await this.emailQueue.add(
-        'email-notification',
+        NOTIFICATION_TYPE_EMAIL,
         {
           userId,
           title,
@@ -207,6 +209,18 @@ export class NotificationService {
     }
   }
 
+  async getUnreadCount(userId: UUID) {
+    try {
+      const count = await this.notificationRepository.count({
+        where: { recipient_id: userId, read: false },
+      });
+      return { success: true, data: count };
+    } catch (error) {
+      this.logger.error('Failed to get unread notification count', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // only for internal use, utilized by workers to save notifications to DB after processing
   async saveNotification(
     userId: UUID,
@@ -222,7 +236,7 @@ export class NotificationService {
         title,
         message,
         data,
-        type: type as 'email' | 'push',
+        type: type as 'email' | 'in-app',
         template: { id: templateId },
         read: false,
       });
@@ -239,9 +253,8 @@ export class NotificationService {
         .getRawOne();
 
       const userSocket = this.notificationGateway.toUser(userId);
-      if (userSocket) {
-        userSocket.emit('new-notification', savedNotification);
-      }
+      Logger.log(`Emitting new notification to user ${userId}`);
+      userSocket?.emit('new-notification', savedNotification);
       return { success: true, notificationId: notification.identifiers[0].id };
     } catch (error) {
       this.logger.error('Failed to save notification', error);
@@ -269,13 +282,20 @@ export class NotificationService {
       }
 
       const rows = await qb
-        .orderBy('n.created_at', 'ASC')
-        .addOrderBy('n.id', 'ASC')
+        .orderBy('n.created_at', 'DESC')
+        .addOrderBy('n.id', 'DESC')
         .limit(100)
         .getMany();
+      
+      const totalUnreadCount = await this.getUnreadCount(userId);
+      
+      const nextCursor = rows.length > 0 ? `${rows[0].created_at.toISOString()}_${rows[0].id}`
+        : null;
 
       return {
         data: formatNotification(rows),
+        nextCursor,
+        totalUnreadCount: totalUnreadCount.data,
       };
     } catch (error) {
       return { error: error.message };
@@ -310,6 +330,8 @@ export class NotificationService {
         .addOrderBy('n.id', 'DESC')
         .limit(limit)
         .getMany();
+      
+      const totalUnreadCount = await this.getUnreadCount(userId);
 
       const last = rows[rows.length - 1];
 
@@ -320,10 +342,11 @@ export class NotificationService {
       return {
         data: formatNotification(rows),
         nextCursor,
+        totalUnreadCount: totalUnreadCount.data,
       };
     } catch (error) {
       this.logger.error('Failed to get notifications', error);
-      return { data: [], nextCursor: null };
+      return { data: [], nextCursor: null, totalUnreadCount: 0 };
     }
   }
 }

@@ -11,10 +11,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
+      - redis-notifications
     networks:
       - notifications-network
-  redis:
+      - backend_fuse-network
+  redis-notifications:
+    container_name: redis-notifications
     image: redis:7-alpine
     env_file:
       - .env
@@ -29,3 +31,5 @@ volumes:
 networks:
   notifications-network:
     driver: bridge
+  backend_fuse-network:
+    external: true

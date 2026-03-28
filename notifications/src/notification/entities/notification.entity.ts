@@ -13,9 +13,9 @@ export class Notification {
 
   @Column({
     type: 'enum',
-    enum: ['email', 'push'],
+    enum: ['email', 'in-app'],
   })
-  type: 'email' | 'push';
+  type: 'email' | 'in-app';
 
   @ManyToOne(() => Template, (template) => template.id, { eager: true })
   @JoinColumn({ name: 'template_id' })
