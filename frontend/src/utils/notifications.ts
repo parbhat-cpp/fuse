@@ -4,3 +4,15 @@ export const renderTemplate = (template: string, data: Record<string, any>) => {
         return value !== undefined ? value : `{{${key}}}`
     })
 }
+
+export const pushNotification = (title: string, options?: NotificationOptions) => {
+    if (Notification.permission === 'granted') {
+        new Notification(title, options)
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                new Notification(title, options)
+            }
+        })
+    }
+}

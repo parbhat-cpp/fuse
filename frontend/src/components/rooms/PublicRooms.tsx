@@ -106,7 +106,7 @@ export default function PublicRooms() {
           fetchNextPage()
         }
       },
-      { threshold: 1 },
+      { threshold: 0.1 },
     )
     if (loadNextRef.current) {
       observer.observe(loadNextRef.current)
@@ -116,7 +116,7 @@ export default function PublicRooms() {
         observer.unobserve(loadNextRef.current)
       }
     }
-  }, [hasNextPage, fetchNextPage])
+  }, [hasNextPage, fetchNextPage, isFetchingNextPage, isFetching])
 
   return status === 'pending' ? (
     <p>Loading...</p>

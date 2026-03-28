@@ -53,7 +53,7 @@ export default function MyScheduledRooms() {
           fetchNextPage()
         }
       },
-      { threshold: 1 },
+      { threshold: 0.1 },
     )
     if (loadNextRef.current) {
       observer.observe(loadNextRef.current)
@@ -63,7 +63,7 @@ export default function MyScheduledRooms() {
         observer.unobserve(loadNextRef.current)
       }
     }
-  }, [hasNextPage, fetchNextPage])
+  }, [hasNextPage, fetchNextPage, isFetchingNextPage, isFetching])
 
   return status === 'pending' ? (
     <p>Loading...</p>

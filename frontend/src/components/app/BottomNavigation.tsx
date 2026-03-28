@@ -3,7 +3,6 @@ import BottomNavigationButton from './BottomNavigationButton'
 import { useLocation } from '@tanstack/react-router';
 import { IoHomeSharp } from "react-icons/io5";
 import { MdMeetingRoom } from "react-icons/md";
-import { FaUserGroup } from "react-icons/fa6";
 import { AiFillDollarCircle } from "react-icons/ai";
 import { IoSettingsSharp } from "react-icons/io5";
 
@@ -25,10 +24,6 @@ const BottomNavigation = () => {
                 currentPath={path}
                 icon={<MdMeetingRoom />}
                 to='/app/rooms' />
-            <BottomNavigationButton
-                currentPath={path}
-                icon={<FaUserGroup />}
-                to='/app/friends' />
             <BottomNavigationButton
                 currentPath={path}
                 icon={<AiFillDollarCircle />}

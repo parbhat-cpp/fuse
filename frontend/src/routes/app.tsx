@@ -6,7 +6,7 @@ import { IoIosLogOut } from 'react-icons/io'
 import PrimaryButton from '@/components/common/PrimaryButton'
 import BottomNavigation from '@/components/app/BottomNavigation'
 import SocketProvider from '@/socket'
-import { BASE_URL, ROUTES_NO_SIDEBAR, WS_URL } from 'config'
+import { ROUTES_NO_SIDEBAR, WS_URL } from 'config'
 import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/app')({
