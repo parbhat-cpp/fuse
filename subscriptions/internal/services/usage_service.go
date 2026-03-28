@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,7 +28,6 @@ func (s *UsageService) GetCurrentUsage(user_id uuid.UUID) (sqlc.GetCurrentSubscr
 	usage_row, err := s.query.GetCurrentSubscriptionUsageWithSubscriptionByUserID(context.Background(), user_uuid)
 
 	if err != nil {
-		log.Printf("Error fetching current subscription usage for user_id %s: %v", user_id, err)
 		default_usage := types.Usage{
 			PublicRoomQuota:     0,
 			RoomSchedulingQuota: 0,
@@ -53,16 +51,12 @@ func (s *UsageService) GetCurrentUsage(user_id uuid.UUID) (sqlc.GetCurrentSubscr
 
 		usage_row, err := s.query.GetCurrentSubscriptionUsageWithSubscriptionByUserID(context.Background(), user_uuid)
 
-		log.Printf("Current usage for user %s: %+v", user_id, usage_row)
-
 		if err != nil {
 			return sqlc.GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow{}, err
 		}
 
 		return usage_row, err
 	}
-	log.Printf("Current usage for user %s: %+v", user_id, usage_row)
-
 	return usage_row, nil
 }
 
