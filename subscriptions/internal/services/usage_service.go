@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ func (s *UsageService) GetCurrentUsage(user_id uuid.UUID) (sqlc.GetCurrentSubscr
 	usage_row, err := s.query.GetCurrentSubscriptionUsageWithSubscriptionByUserID(context.Background(), user_uuid)
 
 	if err != nil {
+		log.Printf("Error fetching current subscription usage for user_id %s: %v", user_id, err)
 		default_usage := types.Usage{
 			PublicRoomQuota:     0,
 			RoomSchedulingQuota: 0,
@@ -36,7 +38,7 @@ func (s *UsageService) GetCurrentUsage(user_id uuid.UUID) (sqlc.GetCurrentSubscr
 		if err != nil {
 			return sqlc.GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow{}, err
 		}
-		new_usage_row, err := s.query.CreateSubscriptionUsage(context.Background(), sqlc.CreateSubscriptionUsageParams{
+		_, err = s.query.CreateSubscriptionUsage(context.Background(), sqlc.CreateSubscriptionUsageParams{
 			UserID: user_uuid,
 			ValidFrom: pgtype.Timestamptz{
 				Time:  time.Now(),
@@ -49,14 +51,17 @@ func (s *UsageService) GetCurrentUsage(user_id uuid.UUID) (sqlc.GetCurrentSubscr
 			Column4: string(default_usage_json), // Usage column sqlc generated it as Column4
 		})
 
-		return sqlc.GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow{
-			ID:         new_usage_row.ID,
-			ValidFrom:  new_usage_row.ValidFrom,
-			ValidUntil: new_usage_row.ValidUntil,
-			Usage:      new_usage_row.Usage,
-			PlanType:   "Free",
-		}, err
+		usage_row, err := s.query.GetCurrentSubscriptionUsageWithSubscriptionByUserID(context.Background(), user_uuid)
+
+		log.Printf("Current usage for user %s: %+v", user_id, usage_row)
+
+		if err != nil {
+			return sqlc.GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow{}, err
+		}
+
+		return usage_row, err
 	}
+	log.Printf("Current usage for user %s: %+v", user_id, usage_row)
 
 	return usage_row, nil
 }

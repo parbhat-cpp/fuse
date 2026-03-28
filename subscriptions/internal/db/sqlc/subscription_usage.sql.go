@@ -95,7 +95,7 @@ func (q *Queries) GetAllSubscriptionUsage(ctx context.Context, userID pgtype.UUI
 }
 
 const getAllSubscriptionUsageWithSubscription = `-- name: GetAllSubscriptionUsageWithSubscription :many
-SELECT su.id, su.valid_from, su.valid_until, su.usage, s.id AS subscription_id, s.plan_type
+SELECT su.id, su.valid_from, su.valid_until, su.usage, s.id AS subscription_id, coalesce(s.plan_type::varchar(40), 'Free') AS plan_type
 FROM subscription_usage AS su
 LEFT JOIN subscriptions AS s ON s.id = su.subscription_id 
 WHERE su.user_id = $1 ORDER BY su.created_at DESC
@@ -107,7 +107,7 @@ type GetAllSubscriptionUsageWithSubscriptionRow struct {
 	ValidUntil     pgtype.Timestamptz
 	Usage          json.RawMessage
 	SubscriptionID pgtype.UUID
-	PlanType       pgtype.Text
+	PlanType       interface{}
 }
 
 func (q *Queries) GetAllSubscriptionUsageWithSubscription(ctx context.Context, userID pgtype.UUID) ([]GetAllSubscriptionUsageWithSubscriptionRow, error) {
@@ -164,9 +164,9 @@ func (q *Queries) GetCurrentSubscriptionUsageByUserID(ctx context.Context, userI
 }
 
 const getCurrentSubscriptionUsageWithSubscriptionByUserID = `-- name: GetCurrentSubscriptionUsageWithSubscriptionByUserID :one
-SELECT su.id, su.valid_from, su.valid_until, su.usage, s.id AS subscription_id, s.plan_type
+SELECT su.id, su.valid_from, su.valid_until, su.usage, s.id AS subscription_id, coalesce(s.plan_type::varchar(40), 'Free') AS plan_type
 FROM subscription_usage AS su
-INNER JOIN subscriptions AS s ON s.id = su.subscription_id 
+LEFT JOIN subscriptions AS s ON s.id = su.subscription_id 
 WHERE su.user_id = $1 AND su.valid_from <= NOW() AND su.valid_until >= NOW() ORDER BY su.created_at DESC LIMIT 1
 `
 
@@ -176,7 +176,7 @@ type GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow struct {
 	ValidUntil     pgtype.Timestamptz
 	Usage          json.RawMessage
 	SubscriptionID pgtype.UUID
-	PlanType       string
+	PlanType       interface{}
 }
 
 func (q *Queries) GetCurrentSubscriptionUsageWithSubscriptionByUserID(ctx context.Context, userID pgtype.UUID) (GetCurrentSubscriptionUsageWithSubscriptionByUserIDRow, error) {
