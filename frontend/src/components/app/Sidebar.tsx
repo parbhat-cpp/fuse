@@ -7,6 +7,7 @@ import { AiFillDollarCircle } from "react-icons/ai";
 import { IoSettingsSharp } from "react-icons/io5";
 import { useLocation } from '@tanstack/react-router';
 import { BiLogOut } from "react-icons/bi";
+import { logout } from '@/utils/auth';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -44,7 +45,7 @@ const Sidebar = () => {
                     currentPath={path}
                 />
             </nav>
-            <PrimaryButton className='bg-red-400 flex items-center justify-center gap-2'>
+            <PrimaryButton className='bg-red-400 flex items-center justify-center gap-2' onClick={logout}>
                 <BiLogOut />
                 Log out
             </PrimaryButton>

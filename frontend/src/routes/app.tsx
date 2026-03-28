@@ -8,6 +8,7 @@ import BottomNavigation from '@/components/app/BottomNavigation'
 import SocketProvider from '@/socket'
 import { ROUTES_NO_SIDEBAR, WS_URL } from 'config'
 import { useEffect, useState } from 'react'
+import { logout } from '@/utils/auth'
 
 export const Route = createFileRoute('/app')({
   component: RouteComponent,
@@ -54,7 +55,7 @@ function RouteComponent() {
               <h5>Welcome, {user.full_name ?? ''}</h5>
               <div className="flex justify-center items-center gap-3">
                 <Notification />
-                <PrimaryButton className="bg-red-400 sm:hidden block p-0">
+                <PrimaryButton className="bg-red-400 sm:hidden block p-0" onClick={logout}>
                   <IoIosLogOut size={28} />
                 </PrimaryButton>
               </div>
