@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ import (
 type AccessService struct {
 	query *sqlc.Queries
 }
+
+var ErrAccessLimitReached = errors.New("access limit reached")
 
 func NewAccessService(query *sqlc.Queries) *AccessService {
 	return &AccessService{
@@ -115,7 +118,7 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 
 		if access_request == constants.AccessTypeJoinRoom {
 			if usage.PublicRoomQuota >= basicPlan.FeaturesJson["public_room_join_limit"] {
-				return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
+				return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("%w: Public Room Joining Quota is exhausted", ErrAccessLimitReached)
 			} else {
 				usage.PublicRoomQuota = usage.PublicRoomQuota + 1
 				limit := basicPlan.FeaturesJson["public_room_join_limit"] - usage.PublicRoomQuota
@@ -133,7 +136,7 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 
 		if access_request == constants.AccessTypeSchedule {
 			if usage.RoomSchedulingQuota >= basicPlan.FeaturesJson["room_schedule_limit"] {
-				return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
+				return &AccessResponse{Plan: &basicPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("%w: Scheduling Room Quota is exhausted", ErrAccessLimitReached)
 			} else {
 				usage.RoomSchedulingQuota = usage.RoomSchedulingQuota + 1
 				limit := basicPlan.FeaturesJson["room_schedule_limit"] - usage.RoomSchedulingQuota
@@ -155,7 +158,7 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 
 		if access_request == constants.AccessTypeJoinRoom {
 			if usage.PublicRoomQuota >= proPlan.FeaturesJson["public_room_join_limit"] {
-				return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
+				return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("%w: Public Room Joining Quota is exhausted", ErrAccessLimitReached)
 			} else {
 				usage.PublicRoomQuota = usage.PublicRoomQuota + 1
 				limit := proPlan.FeaturesJson["public_room_join_limit"] - usage.PublicRoomQuota
@@ -172,7 +175,7 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 
 		if access_request == constants.AccessTypeSchedule {
 			if usage.RoomSchedulingQuota >= proPlan.FeaturesJson["room_schedule_limit"] {
-				return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
+				return &AccessResponse{Plan: &proPlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("%w: Scheduling Room Quota is exhausted", ErrAccessLimitReached)
 			} else {
 				usage.RoomSchedulingQuota = usage.RoomSchedulingQuota + 1
 				limit := proPlan.FeaturesJson["room_schedule_limit"] - usage.RoomSchedulingQuota
@@ -198,7 +201,7 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 
 	if access_request == constants.AccessTypeJoinRoom {
 		if usage.PublicRoomQuota >= freePlan.FeaturesJson["public_room_join_limit"] {
-			return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Public Room Joining Quota is exhausted")
+			return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("%w: Public Room Joining Quota is exhausted", ErrAccessLimitReached)
 		} else {
 			usage.PublicRoomQuota = usage.PublicRoomQuota + 1
 			limit := freePlan.FeaturesJson["public_room_join_limit"] - usage.PublicRoomQuota
@@ -220,7 +223,7 @@ func (s *AccessService) HandleAccessRequest(user_id uuid.UUID, access_request co
 
 	if access_request == constants.AccessTypeSchedule {
 		if usage.RoomSchedulingQuota >= freePlan.FeaturesJson["room_schedule_limit"] {
-			return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("Scheduling Room Quota is exhausted")
+			return &AccessResponse{Plan: &freePlan, IsAllowed: false, LimitLeft: 0, PlanExpired: false}, fmt.Errorf("%w: Scheduling Room Quota is exhausted", ErrAccessLimitReached)
 		} else {
 			usage.RoomSchedulingQuota = usage.RoomSchedulingQuota + 1
 			limit := freePlan.FeaturesJson["room_schedule_limit"] - usage.RoomSchedulingQuota

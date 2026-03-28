@@ -22,24 +22,43 @@ func NewAccessHandler(accessService *services.AccessService) *AccessHandler {
 }
 
 func (h *AccessHandler) HandleAccessRequest(ctx echo.Context) error {
-	user_id := uuid.MustParse(ctx.QueryParam("user_id"))
+	user_id, parseErr := uuid.Parse(ctx.QueryParam("user_id"))
 	access_request := constants.AccessType(ctx.QueryParam("access_request"))
 
+	if parseErr != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid user_id",
+		})
+	}
+
 	if user_id == uuid.Nil {
-		return errors.New("user_id is required")
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "user_id is required",
+		})
 	}
 
 	if access_request == "" {
-		return errors.New("access_request is required")
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "access_request is required",
+		})
 	}
 
 	if access_request != constants.AccessTypeJoinRoom && access_request != constants.AccessTypeSchedule {
-		return errors.New("invalid access_request")
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid access_request",
+		})
 	}
 
 	res, err := h.s.HandleAccessRequest(user_id, access_request)
 
 	if err != nil {
+		if errors.Is(err, services.ErrAccessLimitReached) {
+			return ctx.JSON(http.StatusTooManyRequests, map[string]any{
+				"error": err.Error(),
+				"data":  res,
+			})
+		}
+
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{
 			"error": err.Error(),
 		})
