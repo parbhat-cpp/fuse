@@ -122,6 +122,15 @@ export class UserService {
       );
     }
 
+    const { error: authError } = await supabase.auth.admin.deleteUser(`${id}`);
+
+    if (authError) {
+      throw new HttpException(
+        `Error deleting auth user: ${authError.message}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     return 'User deleted';
   }
 }
