@@ -120,3 +120,31 @@ func (q *Queries) GetRefundsByUserID(ctx context.Context, userID pgtype.UUID) ([
 	}
 	return items, nil
 }
+
+const removeRefundByUserID = `-- name: RemoveRefundByUserID :one
+UPDATE refunds SET is_deleted = true, user_id = NULL WHERE user_id = $1
+RETURNING id, subscription_id, razorpay_payment_id, amount, created_at, updated_at
+`
+
+type RemoveRefundByUserIDRow struct {
+	ID                pgtype.UUID
+	SubscriptionID    pgtype.UUID
+	RazorpayPaymentID string
+	Amount            pgtype.Numeric
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+func (q *Queries) RemoveRefundByUserID(ctx context.Context, userID pgtype.UUID) (RemoveRefundByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, removeRefundByUserID, userID)
+	var i RemoveRefundByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.RazorpayPaymentID,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

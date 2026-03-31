@@ -22,3 +22,7 @@ FROM subscriptions WHERE razorpay_payment_id = $1;
 -- name: GetSubscriptionByID :one
 SELECT id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
 FROM subscriptions WHERE id = $1 ORDER BY created_at DESC LIMIT 1;
+
+-- name: RemoveSubscriptionByUserID :one
+UPDATE subscriptions SET is_deleted = true, user_id = NULL WHERE user_id = $1
+RETURNING id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature;

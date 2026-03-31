@@ -281,3 +281,41 @@ func (q *Queries) GetSubscriptionByUserIDOrderID(ctx context.Context, arg GetSub
 	)
 	return i, err
 }
+
+const removeSubscriptionByUserID = `-- name: RemoveSubscriptionByUserID :one
+UPDATE subscriptions SET is_deleted = true, user_id = NULL WHERE user_id = $1
+RETURNING id, user_id, plan_id, plan_type, purchase_date, valid_from, order_id, valid_until, razorpay_payment_id, razorpay_order_id, razorpay_signature
+`
+
+type RemoveSubscriptionByUserIDRow struct {
+	ID                pgtype.UUID
+	UserID            pgtype.UUID
+	PlanID            pgtype.UUID
+	PlanType          string
+	PurchaseDate      pgtype.Timestamptz
+	ValidFrom         pgtype.Timestamptz
+	OrderID           string
+	ValidUntil        pgtype.Timestamptz
+	RazorpayPaymentID string
+	RazorpayOrderID   string
+	RazorpaySignature string
+}
+
+func (q *Queries) RemoveSubscriptionByUserID(ctx context.Context, userID pgtype.UUID) (RemoveSubscriptionByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, removeSubscriptionByUserID, userID)
+	var i RemoveSubscriptionByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PlanID,
+		&i.PlanType,
+		&i.PurchaseDate,
+		&i.ValidFrom,
+		&i.OrderID,
+		&i.ValidUntil,
+		&i.RazorpayPaymentID,
+		&i.RazorpayOrderID,
+		&i.RazorpaySignature,
+	)
+	return i, err
+}

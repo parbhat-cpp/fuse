@@ -1,0 +1,11 @@
+ALTER TABLE IF EXISTS subscriptions
+ADD COLUMN is_deleted boolean NOT NULL DEFAULT false;
+
+ALTER TABLE IF EXISTS subscriptions
+ALTER COLUMN user_id DROP NOT NULL;
+
+ALTER TABLE IF EXISTS refunds
+ADD COLUMN is_deleted boolean NOT NULL DEFAULT false;
+
+ALTER TABLE IF EXISTS refunds
+ALTER COLUMN user_id DROP NOT NULL;

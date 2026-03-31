@@ -219,6 +219,32 @@ func (q *Queries) GetSubscriptionUsageByID(ctx context.Context, userID pgtype.UU
 	return i, err
 }
 
+const removeSubscriptionUsageByUserID = `-- name: RemoveSubscriptionUsageByUserID :one
+DELETE FROM subscription_usage WHERE user_id = $1
+RETURNING id, subscription_id, valid_from, valid_until, usage
+`
+
+type RemoveSubscriptionUsageByUserIDRow struct {
+	ID             pgtype.UUID
+	SubscriptionID pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	Usage          json.RawMessage
+}
+
+func (q *Queries) RemoveSubscriptionUsageByUserID(ctx context.Context, userID pgtype.UUID) (RemoveSubscriptionUsageByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, removeSubscriptionUsageByUserID, userID)
+	var i RemoveSubscriptionUsageByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.SubscriptionID,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.Usage,
+	)
+	return i, err
+}
+
 const updateSubscriptionUsage = `-- name: UpdateSubscriptionUsage :one
 UPDATE subscription_usage SET usage = $3::text::jsonb
 WHERE id = $1 AND user_id = $2

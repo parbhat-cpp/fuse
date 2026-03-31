@@ -47,12 +47,17 @@ func main() {
 	usageService := services.NewUsageService(query)
 	usageHandler := handlers.NewUsageHandler(usageService)
 
+	// user data deletion
+	deletionService := services.NewDeletionService(query, dbPool)
+	deletionHandler := handlers.NewDeletionHandler(deletionService)
+
 	routes := []handlers.Route{}
 
 	// add routes for subscription v1
 	routes = append(routes, handlers.AccessRoutes(accessHandler)...)
 	routes = append(routes, handlers.PaymentRoutes(paymentHandler)...)
 	routes = append(routes, handlers.UsageRoutes(usageHandler)...)
+	routes = append(routes, handlers.DeletionRoutes(deletionHandler)...)
 
 	handlers.RegisterRoutes(apiV1, routes)
 

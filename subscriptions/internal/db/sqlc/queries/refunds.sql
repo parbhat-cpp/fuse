@@ -10,3 +10,7 @@ FROM refunds WHERE razorpay_payment_id = $1;
 -- name: GetRefundsByUserID :many
 SELECT id, subscription_id, razorpay_payment_id, amount, created_at, updated_at
 FROM refunds WHERE user_id = $1 ORDER BY created_at DESC;
+
+-- name: RemoveRefundByUserID :one
+UPDATE refunds SET is_deleted = true, user_id = NULL WHERE user_id = $1
+RETURNING id, subscription_id, razorpay_payment_id, amount, created_at, updated_at;

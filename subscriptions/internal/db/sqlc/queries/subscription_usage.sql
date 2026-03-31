@@ -36,3 +36,7 @@ RETURNING id, subscription_id, valid_from, valid_until, usage;
 UPDATE subscription_usage SET usage = $3::text::jsonb
 WHERE id = $1 AND user_id = $2
 RETURNING id, subscription_id, valid_from, valid_until, usage;
+
+-- name: RemoveSubscriptionUsageByUserID :one
+DELETE FROM subscription_usage WHERE user_id = $1
+RETURNING id, subscription_id, valid_from, valid_until, usage;
