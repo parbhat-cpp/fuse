@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -102,6 +103,14 @@ export class NotificationController {
     @Query('notificationId', ParseUUIDPipe) notificationId: UUID,
   ) {
     return await this.notificationService.deleteNotification(notificationId);
+  }
+
+  @Delete('delete-all/:userId')
+  async deleteAllNotifications(@Param('userId', ParseUUIDPipe) userId: UUID) {
+    if (!userId) {
+      throw new BadRequestException('Missing x-user-id header');
+    }
+    return await this.notificationService.deleteAllNotifications(userId);
   }
 
   @Patch('mark-all-as-read')

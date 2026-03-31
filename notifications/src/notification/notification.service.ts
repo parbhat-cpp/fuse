@@ -194,6 +194,17 @@ export class NotificationService {
     }
   }
 
+  async deleteAllNotifications(userId: UUID) {
+    try {
+      await this.notificationRepository.delete({
+        recipient_id: userId,
+      });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
   async markAllAsRead(userId: UUID) {
     try {
       const updateResult = await this.notificationRepository
