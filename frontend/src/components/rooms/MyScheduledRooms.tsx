@@ -23,7 +23,16 @@ export default function MyScheduledRooms() {
         },
       },
     )
-    return res.json()
+    if (!res.ok) {
+      throw new Error(scheduledRooms.message || 'Failed to fetch scheduled rooms');
+    }
+    const scheduledRooms = await res.json();
+
+    if (scheduledRooms.rooms.length === 0) {
+      return { rooms: [], nextCursor: null };
+    }
+
+    return scheduledRooms;
   }
 
   const {

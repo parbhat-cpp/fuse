@@ -1,3 +1,4 @@
+import User from '@/components/forms/settings/user/User'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app/settings')({
@@ -5,5 +6,7 @@ export const Route = createFileRoute('/app/settings')({
 })
 
 function RouteComponent() {
-  return <div className='flex-1'>Hello "/app/settings"!</div>
+  return <div className='flex-1 flex justify-center items-center'>
+    <User />
+  </div>
 }

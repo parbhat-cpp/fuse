@@ -29,7 +29,7 @@ const Create = (props: CreateRoomFormProps) => {
 
   useEffect(() => {
     const date = new Date();
-    setTime(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`);
+    setTime(`${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`);
   }, []);
 
   const form = useForm<z.infer<typeof createRoomSchema>>({
