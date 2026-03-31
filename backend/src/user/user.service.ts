@@ -11,12 +11,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UUID } from 'node:crypto';
 import { supabase } from 'src/supabase';
+import { RoomScheduler } from 'src/room-scheduler/entities/room-scheduler.entity';
+import { NotificationsService } from 'src/lib/notifications/notifications.service';
+import { SubscriptionsService } from 'src/lib/subscriptions/subscriptions.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(RoomScheduler)
+    private roomSchedulerRepository: Repository<RoomScheduler>,
+    private subscriptionsService: SubscriptionsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -81,6 +88,28 @@ export class UserService {
    * @returns {Promise<string>} Returns deleted user data
    */
   async remove(id: UUID): Promise<string> {
+    await this.roomSchedulerRepository.delete({
+      admin: { id: id },
+    });
+
+    const notificationsResponse = await this.notificationsService.deleteUserNotifications(id);
+
+    if (!notificationsResponse.success) {
+      throw new HttpException(
+        `Error deleting user notifications: ${notificationsResponse.error.message}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const subscriptionsResponse = await this.subscriptionsService.removeUserSubscriptions(id);
+
+    if (!subscriptionsResponse.success) {
+      throw new HttpException(
+        `Error deleting user subscriptions: ${subscriptionsResponse.error.message}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const { error: profileError } = await supabase
       .from('profiles')
       .delete()
@@ -89,16 +118,6 @@ export class UserService {
     if (profileError) {
       throw new HttpException(
         `Error deleting profile: ${profileError.message}`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Delete from authentication (Admin API)
-    const { error: authError } = await supabase.auth.admin.deleteUser(`${id}`);
-
-    if (authError) {
-      throw new HttpException(
-        `Error deleting user from auth: ${authError.message}`,
         HttpStatus.BAD_REQUEST,
       );
     }

@@ -28,12 +28,6 @@ export class User {
 
   @Column({
     type: 'text',
-    nullable: true,
-  })
-  premium_account?: string;
-
-  @Column({
-    type: 'text',
     nullable: false,
   })
   email: string;

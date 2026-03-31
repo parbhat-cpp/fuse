@@ -33,4 +33,24 @@ export class NotificationsService {
             return { success: false, error };
         }
     }
+
+    async deleteUserNotifications(userId: string) {
+        try {
+            const response = await fetch(`${this.notificationServiceUrl}/delete-all/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                return { success: false, message: 'Failed to delete notifications', error: errorData };
+            }
+            return { success: true, message: 'Notifications deleted successfully' };
+        } catch (error) {
+            Logger.error('Failed to delete notifications', error);
+            return { success: false, message: 'Failed to delete notifications', error };
+        }
+    }
 }

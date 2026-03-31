@@ -32,7 +32,10 @@ export class RoomSearchController {
     @Req() request: Request,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
   ) {
-    const userId = request.headers['X-User-Id'] as string as UUID;
+    const userId = request.headers['x-user-id'] as string as UUID;
+    if (!userId) {
+      throw new Error('User ID is required in the header');
+    }
     return this.roomSearchService.searchScheduledRooms(userId, page);
   }
 }

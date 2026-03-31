@@ -31,7 +31,7 @@ export class UserController {
     @Req() request: Request,
     @Body(new ValidationPipe()) updateUserDto: UpdateUserDto,
   ) {
-    const userId = request.headers['X-User-Id'] as string as UUID;
+    const userId = request.headers['x-user-id'] as string as UUID;
 
     if (!userId)
       throw new BadRequestException('Provide user id to update user');
@@ -40,12 +40,11 @@ export class UserController {
   }
 
   @Delete()
-  remove(@Req() request: Request) {
-    const userId = request.headers['X-User-Id'] as string as UUID;
-
+  async remove(@Req() request: Request) {
+    const userId = request.headers['x-user-id'] as string as UUID;
     if (!userId)
       throw new BadRequestException('Provide user id to delete user');
 
-    return this.userService.remove(userId);
+    return await this.userService.remove(userId);
   }
 }

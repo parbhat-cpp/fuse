@@ -9,6 +9,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { RoomType } from 'src/rooms/types';
 import { Logger } from '@nestjs/common';
 import { formatRoomData } from 'src/rooms/util';
+import { UUID } from 'node:crypto';
 
 @Injectable()
 export class RoomSchedulerService {
