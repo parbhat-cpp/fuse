@@ -17,6 +17,7 @@ const MoreOptions = lazy(() => import('@/components/room/MoreOptions'));
 const LeaveBlockerDialog = lazy(() => import('@/components/room/LeaveBlockerDialog'));
 
 export const Route = createFileRoute('/app/room/')({
+    ssr: false,
     component: RouteComponent,
 })
 

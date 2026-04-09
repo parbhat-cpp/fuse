@@ -19,6 +19,7 @@ import { useSocket } from '@/socket'
 import { currentRoomActivity, roomActivities, roomData } from '@/store/room'
 
 export const Route = createFileRoute('/app/')({
+  ssr: false,
   component: RouteComponent,
 })
 

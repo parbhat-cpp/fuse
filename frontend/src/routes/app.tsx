@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 import { logout } from '@/utils/auth'
 
 export const Route = createFileRoute('/app')({
+  ssr: false,
   component: RouteComponent,
 })
 

@@ -4,6 +4,7 @@ import PublicRooms from '@/components/rooms/PublicRooms'
 import MyScheduledRooms from '@/components/rooms/MyScheduledRooms'
 
 export const Route = createFileRoute('/app/rooms')({
+  ssr: false,
   component: RouteComponent,
 })
 

@@ -31,13 +31,44 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Fuse - Hub of fun activities',
       },
+      {
+        name: 'description',
+        content: 'A room based app to do fun activities with your friends',
+      },
+      // Open Graph
+      { property: 'og:title', content: 'Fuse - Hub of fun activities' },
+      { property: 'og:description', content: 'A room based app to do fun activities with your friends' },
+      { property: 'og:image', content: '/og-image.png' },
+      { property: 'og:type', content: 'article' },
+      // Twitter Card
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'Fuse - Hub of fun activities' },
+      { name: 'twitter:description', content: 'A room based app to do fun activities with your friends' },
+      { name: 'twitter:image', content: '/og-image.png' },
     ],
     links: [
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+    ],
+    scripts: [
+      {
+        type: 'application/ld+json',
+        children: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: 'Fuse - Hub of fun activities',
+          description: 'A room based app to do fun activities with your friends',
+          image: '/og-image.png',
+          author: {
+            '@type': 'Person',
+            name: 'Fuse Team',
+          },
+          datePublished: '2026-03-31',
+        }),
       },
     ],
   }),

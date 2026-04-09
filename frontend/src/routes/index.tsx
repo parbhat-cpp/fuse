@@ -1,5 +1,6 @@
 import BlurText from '@/components/animated/BlurText';
 import ShinyText from '@/components/animated/ShinyText';
+import Footer from '@/components/common/Footer';
 import Header from '@/components/common/Header';
 import { supabaseClient } from '@/supabase-client';
 import { getUserPlan } from '@/utils/subscription';
@@ -43,7 +44,7 @@ function App() {
         .select(`id, username, full_name, email, avatar_url, created_at, updated_at`)
         .eq('id', user?.id)
         .single();
-      
+
       await getUserPlan(user!.id);
 
       if (userResponse.error) {
@@ -75,7 +76,7 @@ function App() {
             className="lg:text-6xl text-5xl text-primary-headline font-bold lg:w-[50vw] w-[70vw] flex justify-center"
           />
           <ShinyText
-            text="It's more than just a video call platform. It's a place for everyone to connect and chill together"
+            text="It's a room based platform. For everyone to connect and chill together"
             disabled={false}
             speed={3}
             className='md:text-3xl text-xl lg:w-[50vw] w-[75vw]'
@@ -91,6 +92,7 @@ function App() {
           disableRotation={false}
         />
       </section>
+      <Footer />
     </main>
   )
 }

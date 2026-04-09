@@ -28,7 +28,7 @@ export default function Header() {
   return (
     <nav className="sticky top-0 left-0 z-50">
       <div className='md:px-12 px-8 py-4 bg-transparent grid md:grid-cols-3 grid-cols-2 shadow-xl items-center mt-5 mx-auto lg:w-[65vw] w-[90vw] rounded-full backdrop-blur-md'>
-        <div className='h-[40px] w-[40px] bg-red-400'></div>
+        <img src="/logo.png" alt="Fuse Logo" className='h-[40px] w-[40px]' />
         <div className='mx-auto md:flex hidden gap-3 text-lg whitespace-nowrap'>
           <Link to='/about'>
             About us
@@ -36,16 +36,16 @@ export default function Header() {
           <Link to='/about'>
             GitHub
           </Link>
-          <Link to='/about'>
+          <Link to='/pricing'>
             Pricing
           </Link>
         </div>
         <div className='ml-auto flex items-center gap-3'>
           <Dialog>
             <DialogTrigger>
-              <PrimaryButton onClick={() => user && navigate({ to: "/app" })}>
+              <div className='text-secondary-background border border-secondary-background px-3 py-1 rounded-lg hover:text-primary hover:bg-secondary-background cursor-pointer' onClick={() => user && navigate({ to: "/app" })}>
                 {user ? "Open App" : "Login"}
-              </PrimaryButton>
+              </div>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>

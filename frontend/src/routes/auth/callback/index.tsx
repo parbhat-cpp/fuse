@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 export const Route = createFileRoute('/auth/callback/')({
+    ssr: false,
     component: RouteComponent,
 })
 
@@ -19,5 +20,9 @@ function RouteComponent() {
         })();
     }, []);
 
-    return <div>Hello "/auth/callback/"!</div>
+    return <div className='flex justify-center items-center h-full'>
+        <p>
+            Processing authentication...
+        </p>
+    </div>
 }

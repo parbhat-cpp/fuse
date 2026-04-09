@@ -4,6 +4,7 @@ import { lazy } from 'react'
 const PlanInfo = lazy(() => import('@/components/subscriptions/PlanInfo'))
 
 export const Route = createFileRoute('/app/subscription')({
+  ssr: false,
   component: RouteComponent,
 })
 

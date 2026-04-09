@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppSubscriptionRouteImport } from './routes/app/subscription'
@@ -20,9 +22,19 @@ import { Route as AuthCallbackIndexRouteImport } from './routes/auth/callback/in
 import { Route as AppSubscriptionIndexRouteImport } from './routes/app/subscription/index'
 import { Route as AppRoomIndexRouteImport } from './routes/app/room/index'
 
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -73,7 +85,9 @@ const AppRoomIndexRoute = AppRoomIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/app': typeof AppRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -85,6 +99,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/pricing': typeof PricingRoute
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -95,7 +111,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/app': typeof AppRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -109,7 +127,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/app'
+    | '/pricing'
     | '/app/room'
     | '/app/rooms'
     | '/app/settings'
@@ -121,6 +141,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
+    | '/pricing'
     | '/app/rooms'
     | '/app/settings'
     | '/app'
@@ -130,7 +152,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/app'
+    | '/pricing'
     | '/app/room'
     | '/app/rooms'
     | '/app/settings'
@@ -143,17 +167,33 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   AppRoute: typeof AppRouteWithChildren
+  PricingRoute: typeof PricingRoute
   AuthCallbackIndexRoute: typeof AuthCallbackIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -265,7 +305,9 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   AppRoute: AppRouteWithChildren,
+  PricingRoute: PricingRoute,
   AuthCallbackIndexRoute: AuthCallbackIndexRoute,
 }
 export const routeTree = rootRouteImport

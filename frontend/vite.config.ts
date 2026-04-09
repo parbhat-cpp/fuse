@@ -13,6 +13,10 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart({
       customViteReactPlugin: true,
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+      }
     }),
     viteReact(),
   ],

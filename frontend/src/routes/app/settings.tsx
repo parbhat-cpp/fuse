@@ -2,6 +2,7 @@ import User from '@/components/forms/settings/user/User'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app/settings')({
+  ssr: false,
   component: RouteComponent,
 })
 

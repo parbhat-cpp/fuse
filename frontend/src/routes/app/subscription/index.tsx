@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { TiTick } from "react-icons/ti";
 
 export const Route = createFileRoute('/app/subscription/')({
+  ssr: false,
   component: RouteComponent,
 })
 
