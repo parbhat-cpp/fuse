@@ -7,6 +7,7 @@ import { AiOutlineClose } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
 import useAuth from '@/hooks/useAuth';
 import { supabaseClient } from '@/supabase-client';
+import { PORTFOLIO_URL, REPOSITORY_URL } from 'config';
 
 export default function Header() {
   const user = useAuth();
@@ -30,10 +31,10 @@ export default function Header() {
       <div className='md:px-12 px-8 py-4 bg-transparent grid md:grid-cols-3 grid-cols-2 shadow-xl items-center mt-5 mx-auto lg:w-[65vw] w-[90vw] rounded-full backdrop-blur-md'>
         <img src="/logo.png" alt="Fuse Logo" className='h-[40px] w-[40px]' />
         <div className='mx-auto md:flex hidden gap-3 text-lg whitespace-nowrap'>
-          <Link to='/about'>
+          <Link to={PORTFOLIO_URL}>
             About us
           </Link>
-          <Link to='/about'>
+          <Link to={REPOSITORY_URL}>
             GitHub
           </Link>
           <Link to='/pricing'>

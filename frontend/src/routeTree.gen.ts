@@ -9,6 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsConditionRouteImport } from './routes/terms-condition'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AboutRouteImport } from './routes/about'
@@ -22,6 +25,21 @@ import { Route as AuthCallbackIndexRouteImport } from './routes/auth/callback/in
 import { Route as AppSubscriptionIndexRouteImport } from './routes/app/subscription/index'
 import { Route as AppRoomIndexRouteImport } from './routes/app/room/index'
 
+const TermsConditionRoute = TermsConditionRouteImport.update({
+  id: '/terms-condition',
+  path: '/terms-condition',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({
+  id: '/refund-policy',
+  path: '/refund-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -88,6 +106,9 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/app': typeof AppRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/refund-policy': typeof RefundPolicyRoute
+  '/terms-condition': typeof TermsConditionRoute
   '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -101,6 +122,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/pricing': typeof PricingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/refund-policy': typeof RefundPolicyRoute
+  '/terms-condition': typeof TermsConditionRoute
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
@@ -114,6 +138,9 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/app': typeof AppRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/refund-policy': typeof RefundPolicyRoute
+  '/terms-condition': typeof TermsConditionRoute
   '/app/room': typeof AppRoomRouteWithChildren
   '/app/rooms': typeof AppRoomsRoute
   '/app/settings': typeof AppSettingsRoute
@@ -130,6 +157,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/app'
     | '/pricing'
+    | '/privacy-policy'
+    | '/refund-policy'
+    | '/terms-condition'
     | '/app/room'
     | '/app/rooms'
     | '/app/settings'
@@ -143,6 +173,9 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/pricing'
+    | '/privacy-policy'
+    | '/refund-policy'
+    | '/terms-condition'
     | '/app/rooms'
     | '/app/settings'
     | '/app'
@@ -155,6 +188,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/app'
     | '/pricing'
+    | '/privacy-policy'
+    | '/refund-policy'
+    | '/terms-condition'
     | '/app/room'
     | '/app/rooms'
     | '/app/settings'
@@ -170,11 +206,35 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AppRoute: typeof AppRouteWithChildren
   PricingRoute: typeof PricingRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  RefundPolicyRoute: typeof RefundPolicyRoute
+  TermsConditionRoute: typeof TermsConditionRoute
   AuthCallbackIndexRoute: typeof AuthCallbackIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms-condition': {
+      id: '/terms-condition'
+      path: '/terms-condition'
+      fullPath: '/terms-condition'
+      preLoaderRoute: typeof TermsConditionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund-policy': {
+      id: '/refund-policy'
+      path: '/refund-policy'
+      fullPath: '/refund-policy'
+      preLoaderRoute: typeof RefundPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -308,6 +368,9 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AppRoute: AppRouteWithChildren,
   PricingRoute: PricingRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  RefundPolicyRoute: RefundPolicyRoute,
+  TermsConditionRoute: TermsConditionRoute,
   AuthCallbackIndexRoute: AuthCallbackIndexRoute,
 }
 export const routeTree = rootRouteImport

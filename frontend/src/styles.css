@@ -16,6 +16,7 @@ body {
 :root {
   /* primary theme */
   --primary-background: oklch(0.2903 0.0537 273.74);
+  --primary-light-bg: oklch(0.4512 0.0885 272.81);
   --primary-headline: oklch(0.9997 0.0013 106.42);
   --primary-paragraph: oklch(0.8184 0.0614 275.71);
   --primary-button: oklch(0.8398 0.0596 7.91);
@@ -94,6 +95,7 @@ body {
 @theme inline {
   /* primary theme */
   --color-primary-background: var(--primary-background);
+  --color-primary-light-bg: var(--primary-light-bg);
   --color-primary-headline: var(--primary-headline);
   --color-primary-paragraph: var(--primary-paragraph);
   --color-primary-button: var(--primary-button);

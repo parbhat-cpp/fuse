@@ -1,4 +1,6 @@
 export const BASE_URL = import.meta.env.VITE_BASE_URL
+export const PORTFOLIO_URL = 'https://parbhatsharma.vercel.app/';
+export const REPOSITORY_URL = 'https://github.com/parbhat-cpp/fuse';
 export const API_URL = `${BASE_URL}/api`
 export const SUBSCRIPTION_URL = `${BASE_URL}/subscription/v1`
 export const NOTIFICATION_URL = `${BASE_URL}/notifications`
