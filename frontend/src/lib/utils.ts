@@ -38,7 +38,7 @@ export function canJoinRoom(date: string) {
 }
 
 export function roomJoinLink(roomId: string) {
-  return `${API_URL}/room/join-room?id=${roomId}`
+  return `${import.meta.env.VITE_HOST}/app?roomId=${roomId}`
 }
 
 export function getToken() {

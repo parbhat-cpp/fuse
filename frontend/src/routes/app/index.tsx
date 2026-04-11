@@ -2,7 +2,7 @@
 
 import toast from 'react-hot-toast'
 import { useEffect, useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import InputWithCopy from '@/components/common/InputWithCopy'
 import Create from '@/components/forms/room/Create'
 import Join from '@/components/forms/room/Join'
@@ -17,8 +17,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { canJoinRoom, roomJoinLink, toLocalDate } from '@/lib/utils'
 import { useSocket } from '@/socket'
 import { currentRoomActivity, roomActivities, roomData } from '@/store/room'
+import z from 'zod'
+import { zodValidator } from '@tanstack/zod-adapter'
+
+const roomJoinSchema = z.object({
+  roomId: z.string().min(5).or(z.number().min(5)).optional(),
+});
 
 export const Route = createFileRoute('/app/')({
+  validateSearch: zodValidator(roomJoinSchema),
   ssr: false,
   component: RouteComponent,
 })
@@ -26,6 +33,9 @@ export const Route = createFileRoute('/app/')({
 function RouteComponent() {
   const socket = useSocket('room')
   const navigate = useNavigate()
+
+  // extract roomId from search params if present (e.g., /app?roomId=12345)
+  const { roomId } = useSearch({ from: '/app' });
 
   const [openRoomScheduledDialog, setOpenRoomScheduledDialog] = useState(false)
   const [openDenyRoomJoinDialog, setOpenDenyRoomJoinDialog] = useState(false)
@@ -96,6 +106,12 @@ function RouteComponent() {
       socket.off('access-denied')
     }
   }, [socket])
+
+  useEffect(() => {
+    if (roomId && socket) {
+      handleRoomJoin(roomId);
+    }
+  }, [roomId, socket]);
 
   const handleRoomCreation = (
     roomName: string,

@@ -39,6 +39,7 @@
     "@tanstack/react-store": "^0.7.0",
     "@tanstack/router-plugin": "^1.121.2",
     "@tanstack/store": "^0.7.0",
+    "@tanstack/zod-adapter": "^1.166.9",
     "@types/socket.io-client": "^1.4.36",
     "ai": "^5.0.8",
     "class-variance-authority": "^0.7.1",

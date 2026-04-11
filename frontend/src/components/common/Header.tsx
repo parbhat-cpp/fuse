@@ -79,18 +79,33 @@ export default function Header() {
               </DrawerHeader>
               <div className='p-5 flex flex-col gap-4 text-xl'>
                 <DrawerClose className='self-start'>
-                  <Link to='/about'>
+                  <Link to={PORTFOLIO_URL}>
                     About us
                   </Link>
                 </DrawerClose>
                 <DrawerClose className='self-start'>
-                  <Link to='/about'>
+                  <Link to={REPOSITORY_URL}>
                     GitHub
                   </Link>
                 </DrawerClose>
                 <DrawerClose className='self-start'>
-                  <Link to='/about'>
+                  <Link to='/pricing'>
                     Pricing
+                  </Link>
+                </DrawerClose>
+                <DrawerClose className='self-start'>
+                  <Link to='/terms-condition'>
+                    Terms & Conditions
+                  </Link>
+                </DrawerClose>
+                <DrawerClose className='self-start'>
+                  <Link to='/privacy-policy'>
+                    Privacy Policy
+                  </Link>
+                </DrawerClose>
+                <DrawerClose className='self-start'>
+                  <Link to='/refund-policy'>
+                    Refund Policy
                   </Link>
                 </DrawerClose>
               </div>
