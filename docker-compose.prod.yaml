@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: fusecons.azurecr.io/nginx:${GITHUB_SHA}
+    image: fusecons.azurecr.io/nginx:${IMAGE_TAG}
     ports:
       - "80:80"
     networks:
