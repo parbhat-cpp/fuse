@@ -1,0 +1,13 @@
+services:
+  auth:
+    image: fusecons.azurecr.io/auth:${IMAGE_TAG}
+    container_name: auth_service
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    networks:
+      - backend_fuse-network
+networks:
+  backend_fuse-network:
+    external: true

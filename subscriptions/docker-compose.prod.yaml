@@ -1,9 +1,7 @@
 services:
   subscriptions:
     container_name: subscriptions-prod
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+    image: fusecons.azurecr.io/subscriptions:${IMAGE_TAG}
     environment:
       GO_ENV: production
     ports:

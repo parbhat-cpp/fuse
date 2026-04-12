@@ -1,0 +1,51 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches: [ "main" ]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Login to ACR
+      run: |
+        echo ${{ secrets.ACR_PASSWORD }} | docker login $REGISTRY \
+          -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+    - name: Build & Push Images
+      run: |
+        set -e
+        echo "🚀 Building images with tag $IMAGE_TAG"
+        ./build_push.sh
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.AZURE_HOST }}
+        username: ${{ secrets.AZURE_USER }}
+        key: ${{ secrets.AZURE_SSH_KEY }}
+        script: |
+          set -e
+
+          export IMAGE_TAG=${{ github.sha }}
+
+          echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ secrets.ACR_LOGIN_SERVER }} \
+            -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+          cd fuse
+
+          ./deploy.sh

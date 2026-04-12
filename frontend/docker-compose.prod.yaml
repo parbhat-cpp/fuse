@@ -1,8 +1,7 @@
 services:
-  production:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+  frontend-prod:
+    image: fusecons.azurecr.io/frontend:${IMAGE_TAG}
+    container_name: frontend-prod
     ports:
       - "5173:3000"
     env_file:

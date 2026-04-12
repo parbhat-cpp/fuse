@@ -1,0 +1,13 @@
+services:
+  scheduler:
+    container_name: scheduler-worker
+    image: fusecons.azurecr.io/scheduler-worker:${IMAGE_TAG}
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env
+    networks:
+      - backend_fuse-network
+networks:
+  backend_fuse-network:
+    external: true

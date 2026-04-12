@@ -1,8 +1,6 @@
 services:
   notifications:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+    image: fusecons.azurecr.io/notifications:${IMAGE_TAG}
     container_name: notifications-prod
     environment:
       NODE_ENV: production
