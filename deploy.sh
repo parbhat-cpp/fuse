@@ -1,36 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Preserve values passed in from CI before .env can clobber them
-_IMAGE_TAG="${IMAGE_TAG:-}"
-_REGISTRY="${REGISTRY:-}"
+DEPLOY_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$DEPLOY_DIR"
 
-# Load .env for everything else (DB URLs, app secrets, etc.)
 set -o allexport
 source .env
 set +o allexport
 
-# CI values always win over .env
-IMAGE_TAG="${_IMAGE_TAG:-${IMAGE_TAG:-latest}}"
-REGISTRY="${_REGISTRY:-${REGISTRY:-}}"
+# Collect compose files — root nginx first, then services
+compose_args=()
 
-export IMAGE_TAG REGISTRY
+# Root nginx compose always goes first
+if [[ -f "./docker-compose.prod.yaml" ]]; then
+    compose_args+=("-f" "$(realpath ./docker-compose.prod.yaml)")
+fi
 
-echo "Deploying IMAGE_TAG=$IMAGE_TAG"
-
-# Collect all prod compose files
-compose_files=()
+# Then all nested service compose files
 while IFS= read -r -d '' file; do
-    compose_files+=("-f" "$(realpath "$file")")
-done < <(find . -type f -name "docker-compose.prod.yaml" -print0)
+    realpath_file="$(realpath "$file")"
+    # Skip the root one — already added
+    [[ "$realpath_file" == "$(realpath ./docker-compose.prod.yaml)" ]] && continue
+    compose_args+=("-f" "$realpath_file")
+done < <(find . -mindepth 2 -name "docker-compose.prod.yaml" \
+    -not -path "./.git/*" \
+    -print0 | sort -z)
 
-if [[ ${#compose_files[@]} -eq 0 ]]; then
-    echo "No docker-compose.prod.yaml files found" >&2
+if [[ ${#compose_args[@]} -eq 0 ]]; then
+    echo "ERROR: No docker-compose.prod.yaml files found" >&2
     exit 1
 fi
 
-echo "Pulling images..."
-docker compose "${compose_files[@]}" pull
+echo "Deploying with ${#compose_args[@]} compose file(s)..."
 
-echo "Starting services..."
-docker compose "${compose_files[@]}" up -d --remove-orphans
+docker compose "${compose_args[@]}" pull
+docker compose "${compose_args[@]}" up -d --remove-orphans
+
+echo "Deploy complete"

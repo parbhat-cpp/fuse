@@ -1,67 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REGISTRY="${REGISTRY:-myregistry.azurecr.io}"
+SERVICE_DIR="${1:?Usage: build_push.sh <service-dir>}"
+REGISTRY="${REGISTRY:?REGISTRY is not set}"
+IMAGE_TAG="${IMAGE_TAG:?IMAGE_TAG is not set}"
 PROJECT_PREFIX="${PROJECT_PREFIX:-fuse}"
-IMAGE_TAG="${IMAGE_TAG:-latest}"
-DRY_RUN="${DRY_RUN:-false}"   # default false — actually build in CI
 
-echo "Registry:  $REGISTRY"
-echo "Tag:       $IMAGE_TAG"
-echo "Dry run:   $DRY_RUN"
-
-is_excluded() {
-    local path="$1"
-    [[ "$path" == ./cli/* ]]          && return 0
-    [[ "$path" == ./.git/* ]]         && return 0
-    [[ "$path" == ./node_modules/* ]] && return 0
-    return 1
-}
-
-to_repo_name() {
+to_image_name() {
     local rel="$1"
     local name
     name="${rel//\//-}"
     name="${name,,}"
-    name="${name//[_ ]/-}"
-    name="$(echo "$name" | sed -E 's/[^a-z0-9.-]+/-/g; s/^-+//; s/-+$//; s/-+/-/g')"
+    name="$(echo "$name" | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//')"
     echo "${PROJECT_PREFIX}-${name}"
 }
 
-declare -A service_dockerfile_map=()
-services=()
+DOCKERFILE="${SERVICE_DIR}/Dockerfile.prod"
 
-while IFS= read -r -d '' dockerfile; do
-    is_excluded "$dockerfile" && continue
+if [[ ! -f "$DOCKERFILE" ]]; then
+    echo "ERROR: $DOCKERFILE not found" >&2
+    exit 1
+fi
 
-    service_dir="$(dirname "$dockerfile")"
-    service_dir="${service_dir#./}"
+if ! grep -q "^FROM" "$DOCKERFILE"; then
+    echo "ERROR: $DOCKERFILE is empty or invalid" >&2
+    exit 1
+fi
 
-    if [[ -n "${service_dockerfile_map[$service_dir]:-}" ]]; then
-        # Prefer Dockerfile.prod over Dockerfile
-        [[ "${service_dockerfile_map[$service_dir]}" == *"Dockerfile.prod" ]] && continue
-        [[ "$dockerfile" == *"Dockerfile.prod" ]] && service_dockerfile_map["$service_dir"]="$dockerfile"
-    else
-        services+=("$service_dir")
-        service_dockerfile_map["$service_dir"]="$dockerfile"
-    fi
-done < <(find . -type f \( -name "Dockerfile.prod" -o -name "Dockerfile" \) -print0)
+IMAGE_NAME="$(to_image_name "$SERVICE_DIR")"
+SHA_TAG="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+LATEST_TAG="${REGISTRY}/${IMAGE_NAME}:latest"
 
-echo "Services discovered: ${#services[@]}"
+echo "Building $SERVICE_DIR"
+echo "  -> $SHA_TAG"
+docker build -f "$DOCKERFILE" -t "$SHA_TAG" -t "$LATEST_TAG" "$SERVICE_DIR"
 
-for service in "${services[@]}"; do
-    dockerfile="${service_dockerfile_map[$service]}"
-    image="${REGISTRY}/$(to_repo_name "$service"):${IMAGE_TAG}"
-
-    if ! grep -q "^FROM" "$dockerfile"; then
-        echo "  [$service] Skipping — no FROM in $dockerfile"
-        continue
-    fi
-
-    echo "  [$service] -> $image"
-
-    [[ "$DRY_RUN" == "true" ]] && continue
-
-    docker build -f "$dockerfile" -t "$image" "$service"
-    docker push "$image"
-done
+echo "Pushing images..."
+docker push "$SHA_TAG"
+docker push "$LATEST_TAG"

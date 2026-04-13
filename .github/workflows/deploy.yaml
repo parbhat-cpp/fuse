@@ -13,33 +13,60 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build-and-deploy:
+  detect-changes:
     runs-on: ubuntu-latest
-
+    outputs:
+      services_to_build: ${{ steps.detect.outputs.services_to_build }}
+      has_builds: ${{ steps.detect.outputs.has_builds }}
+      needs_deploy: ${{ steps.detect.outputs.needs_deploy }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Detect changed services
+        id: detect
+        run: bash ./detect_changes.sh
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_builds == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
       - name: Login to ACR
         run: |
           echo "${{ secrets.ACR_PASSWORD }}" | docker login "$REGISTRY" \
             -u "${{ secrets.ACR_USERNAME }}" --password-stdin
 
-      - name: Build & Push Images
+      - name: Build & Push changed services
         run: |
-          set -e
-          DRY_RUN=false ./build_push.sh
+          echo '${{ needs.detect-changes.outputs.services_to_build }}' \
+            | jq -r '.[]' \
+            | while read -r service; do
+                echo "::group::Building $service"
+                bash ./build_push.sh "$service"
+                echo "::endgroup::"
+              done
 
+  deploy:
+    needs: [detect-changes, build-and-push]
+    # Run if something needs deploying, even if build was skipped
+    if: |
+      always() &&
+      needs.detect-changes.outputs.needs_deploy == 'true' &&
+      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          envs: IMAGE_TAG,REGISTRY
           script: |
-            set -e
-            cd /home/${{ secrets.AZURE_USER }}/fuse
+            set -euo pipefail
             echo "${{ secrets.ACR_PASSWORD }}" | docker login "${{ secrets.ACR_LOGIN_SERVER }}" \
               -u "${{ secrets.ACR_USERNAME }}" --password-stdin
-            IMAGE_TAG="$IMAGE_TAG" REGISTRY="$REGISTRY" ./deploy.sh
+            cd /home/${{ secrets.AZURE_USER }}/fuse
+            bash ./deploy.sh
