@@ -6,10 +6,6 @@ export $(grep -v '^#' .env | xargs)
 # ensure IMAGE_TAG exists
 export IMAGE_TAG=${IMAGE_TAG:-latest}
 
-docker login fusecons.azurecr.io \
-  -u "$ACR_USERNAME" \
-  -p "$ACR_PASSWORD"
-
 get_prod_compose_files() {
     local -n file_arr=$1
 
@@ -34,7 +30,7 @@ pull_cmd+=" pull"
 up_cmd+=" up -d --remove-orphans"
 
 echo "Running Pull Command"
-eval $pull_cmd
+eval "IMAGE_TAG=$IMAGE_TAG $pull_cmd"
 
 echo "Running: Up Command"
-eval $up_cmd
+eval "IMAGE_TAG=$IMAGE_TAG $up_cmd"
