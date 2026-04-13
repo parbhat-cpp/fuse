@@ -53,6 +53,11 @@ for service in "${services[@]}"; do
     dockerfile="${service_dockerfile_map[$service]}"
     image="${REGISTRY}/$(to_repo_name "$service"):${IMAGE_TAG}"
 
+    if ! grep -q "^FROM" "$dockerfile"; then
+        echo "  [$service] Skipping — no FROM in $dockerfile"
+        continue
+    fi
+
     echo "  [$service] -> $image"
 
     [[ "$DRY_RUN" == "true" ]] && continue
