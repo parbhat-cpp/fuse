@@ -2,7 +2,7 @@ name: Deploy to Azure VM
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 concurrency:
   group: deploy-production
@@ -17,34 +17,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Login to ACR
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login "$REGISTRY" \
+            -u "${{ secrets.ACR_USERNAME }}" --password-stdin
 
-    - name: Login to ACR
-      run: |
-        echo ${{ secrets.ACR_PASSWORD }} | docker login $REGISTRY \
-          -u ${{ secrets.ACR_USERNAME }} --password-stdin
-
-    - name: Build & Push Images
-      run: |
-        set -e
-        echo "🚀 Building images with tag $IMAGE_TAG"
-        ./build_push.sh
-
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.AZURE_HOST }}
-        username: ${{ secrets.AZURE_USER }}
-        key: ${{ secrets.AZURE_SSH_KEY }}
-        envs: IMAGE_TAG,REGISTRY
-        script: |
+      - name: Build & Push Images
+        run: |
           set -e
+          DRY_RUN=false ./build_push.sh
 
-          echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ secrets.ACR_LOGIN_SERVER }} \
-            -u ${{ secrets.ACR_USERNAME }} --password-stdin
-
-          cd /home/${{ secrets.AZURE_USER }}/fuse
-
-          ./deploy.sh
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          envs: IMAGE_TAG,REGISTRY
+          script: |
+            set -e
+            cd /home/${{ secrets.AZURE_USER }}/fuse
+            echo "${{ secrets.ACR_PASSWORD }}" | docker login "${{ secrets.ACR_LOGIN_SERVER }}" \
+              -u "${{ secrets.ACR_USERNAME }}" --password-stdin
+            IMAGE_TAG="$IMAGE_TAG" REGISTRY="$REGISTRY" ./deploy.sh

@@ -1,36 +1,36 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-# load env file
-export $(grep -v '^#' .env | xargs)
+# Preserve values passed in from CI before .env can clobber them
+_IMAGE_TAG="${IMAGE_TAG:-}"
+_REGISTRY="${REGISTRY:-}"
 
-# ensure IMAGE_TAG exists
-export IMAGE_TAG=${IMAGE_TAG:-latest}
+# Load .env for everything else (DB URLs, app secrets, etc.)
+set -o allexport
+source .env
+set +o allexport
 
-get_prod_compose_files() {
-    local -n file_arr=$1
+# CI values always win over .env
+IMAGE_TAG="${_IMAGE_TAG:-${IMAGE_TAG:-latest}}"
+REGISTRY="${_REGISTRY:-${REGISTRY:-}}"
 
-    while IFS= read -r -d '' file; do
-        file_arr+=("$(realpath "$file")")
-    done < <(find . -type f -name "docker-compose.prod.yaml" -print0)
-}
+export IMAGE_TAG REGISTRY
 
+echo "Deploying IMAGE_TAG=$IMAGE_TAG"
+
+# Collect all prod compose files
 compose_files=()
-get_prod_compose_files compose_files
+while IFS= read -r -d '' file; do
+    compose_files+=("-f" "$(realpath "$file")")
+done < <(find . -type f -name "docker-compose.prod.yaml" -print0)
 
-base_docker_compose_cmd="docker compose"
-pull_cmd="$base_docker_compose_cmd"
-up_cmd="$base_docker_compose_cmd"
+if [[ ${#compose_files[@]} -eq 0 ]]; then
+    echo "No docker-compose.prod.yaml files found" >&2
+    exit 1
+fi
 
-for file in "${compose_files[@]}"; do
-    pull_cmd+=" -f $file"
-    up_cmd+=" -f $file"
-done
+echo "Pulling images..."
+docker compose "${compose_files[@]}" pull
 
-pull_cmd+=" pull"
-up_cmd+=" up -d --remove-orphans"
-
-echo "Running Pull Command"
-eval "IMAGE_TAG=$IMAGE_TAG $pull_cmd"
-
-echo "Running: Up Command"
-eval "IMAGE_TAG=$IMAGE_TAG $up_cmd"
+echo "Starting services..."
+docker compose "${compose_files[@]}" up -d --remove-orphans
