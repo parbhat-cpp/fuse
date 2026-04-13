@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-docker login myregistry.azurecr.io \
+docker login fusecons.azurecr.io \
   -u "$ACR_USERNAME" \
   -p "$ACR_PASSWORD"
 

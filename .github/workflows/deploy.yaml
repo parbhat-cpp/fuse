@@ -38,14 +38,13 @@ jobs:
         host: ${{ secrets.AZURE_HOST }}
         username: ${{ secrets.AZURE_USER }}
         key: ${{ secrets.AZURE_SSH_KEY }}
+        envs: IMAGE_TAG,REGISTRY
         script: |
           set -e
-
-          export IMAGE_TAG=${{ github.sha }}
 
           echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ secrets.ACR_LOGIN_SERVER }} \
             -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
-          cd fuse
+          cd /home/${{ secrets.AZURE_USER }}/fuse
 
           ./deploy.sh
