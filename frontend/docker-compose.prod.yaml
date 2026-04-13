@@ -1,6 +1,6 @@
 services:
   frontend-prod:
-    image: fusecons.azurecr.io/frontend:${IMAGE_TAG}
+    image: fusecons.azurecr.io/frontend:latest
     container_name: frontend-prod
     ports:
       - "5173:3000"

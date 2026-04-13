@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: fusecons.azurecr.io/nginx:${IMAGE_TAG}
+    image: fusecons.azurecr.io/nginx:latest
     ports:
       - "80:80"
     networks:
