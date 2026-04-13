@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# load env file
+export $(grep -v '^#' .env | xargs)
+
+# ensure IMAGE_TAG exists
+export IMAGE_TAG=${IMAGE_TAG:-latest}
+
 docker login fusecons.azurecr.io \
   -u "$ACR_USERNAME" \
   -p "$ACR_PASSWORD"
