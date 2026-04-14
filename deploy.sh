@@ -19,25 +19,17 @@ for network in "${networks[@]}"; do
     fi
 done
 
-# Collect compose files — root nginx first, then services
-compose_args=()
+# Collect compose files
+root_compose_file="${PROJECT_ROOT}/docker-compose.prod.yaml"
+service_compose_files=()
 
-# Root nginx compose always goes first
-if [[ -f "${PROJECT_ROOT}/docker-compose.prod.yaml" ]]; then
-    compose_args+=("-f" "${PROJECT_ROOT}/docker-compose.prod.yaml")
-fi
-
-# Then all nested service compose files
 while IFS= read -r -d '' file; do
-    realpath_file="$(realpath "$file")"
-    # Skip the root one — already added
-    [[ "$realpath_file" == "$(realpath "${PROJECT_ROOT}/docker-compose.prod.yaml")" ]] && continue
-    compose_args+=("-f" "$realpath_file")
+    service_compose_files+=("$(realpath "$file")")
 done < <(find "${PROJECT_ROOT}" -mindepth 2 -name "docker-compose.prod.yaml" \
     -not -path "*/.git/*" \
     -print0 | sort -z)
 
-if [[ ${#compose_args[@]} -eq 0 ]]; then
+if [[ ${#service_compose_files[@]} -eq 0 && ! -f "${root_compose_file}" ]]; then
     echo "ERROR: No compose files found" >&2
     exit 1
 fi
@@ -57,11 +49,42 @@ docker rm -f \
     2>/dev/null || true
 
 echo "Pulling latest images..."
-cd "${PROJECT_ROOT}"
-docker compose "${compose_args[@]}" pull
+for compose_file in "${service_compose_files[@]}"; do
+    compose_dir="$(dirname "${compose_file}")"
+    compose_name="$(basename "${compose_file}")"
+    echo "Pulling: ${compose_file}"
+    (
+        cd "${compose_dir}"
+        docker compose -f "${compose_name}" pull
+    )
+done
+
+if [[ -f "${root_compose_file}" ]]; then
+    echo "Pulling: ${root_compose_file}"
+    (
+        cd "${PROJECT_ROOT}"
+        docker compose -f "$(basename "${root_compose_file}")" pull
+    )
+fi
 
 echo "Starting containers..."
-docker compose "${compose_args[@]}" up -d
+for compose_file in "${service_compose_files[@]}"; do
+    compose_dir="$(dirname "${compose_file}")"
+    compose_name="$(basename "${compose_file}")"
+    echo "Starting: ${compose_file}"
+    (
+        cd "${compose_dir}"
+        docker compose -f "${compose_name}" up -d
+    )
+done
+
+if [[ -f "${root_compose_file}" ]]; then
+    echo "Starting: ${root_compose_file}"
+    (
+        cd "${PROJECT_ROOT}"
+        docker compose -f "$(basename "${root_compose_file}")" up -d
+    )
+fi
 
 echo "Cleaning up unused images..."
 docker image prune -f
