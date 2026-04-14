@@ -29,11 +29,11 @@ services:
     restart: always
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0
     volumes:
-      - redis-data:/data
+      - redis-main-data:/data
     networks:
       - fuse-network
 volumes:
-  redis-data:
+  redis-main-data:
 networks:
   fuse-network:
     external: true

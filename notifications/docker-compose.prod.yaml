@@ -21,11 +21,11 @@ services:
     restart: always
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --bind 0.0.0.0
     volumes:
-      - redis-data:/data
+      - redis-notifications-data:/data
     networks:
       - notifications-network
 volumes:
-  redis-data:
+  redis-notifications-data:
 networks:
   notifications-network:
     external: true
