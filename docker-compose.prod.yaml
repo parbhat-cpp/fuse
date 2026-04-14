@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: fusecons.azurecr.io/nginx:latest
+    image: fusecons.azurecr.io/fuse-nginx:latest
     ports:
       - "80:80"
     networks:

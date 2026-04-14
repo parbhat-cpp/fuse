@@ -10,7 +10,7 @@
 services:
   main-backend:
     container_name: backend-prod
-    image: fusecons.azurecr.io/backend:latest
+    image: fusecons.azurecr.io/fuse-backend:latest
     environment:
       NODE_ENV: production
     ports:

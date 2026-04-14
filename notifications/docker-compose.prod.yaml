@@ -1,6 +1,6 @@
 services:
   notifications:
-    image: fusecons.azurecr.io/notifications:latest
+    image: fusecons.azurecr.io/fuse-notifications:latest
     container_name: notifications-prod
     environment:
       NODE_ENV: production

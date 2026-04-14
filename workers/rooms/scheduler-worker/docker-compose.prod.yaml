@@ -1,7 +1,7 @@
 services:
   scheduler:
     container_name: scheduler-worker
-    image: fusecons.azurecr.io/scheduler-worker:latest
+    image: fusecons.azurecr.io/fuse-workers-rooms-scheduler-worker:latest
     environment:
       NODE_ENV: production
     env_file:

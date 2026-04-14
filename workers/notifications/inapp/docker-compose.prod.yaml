@@ -1,6 +1,6 @@
 services:
   inapp:
-    image: fusecons.azurecr.io/inapp-notifications-worker:latest
+    image: fusecons.azurecr.io/fuse-workers-notifications-inapp:latest
     container_name: inapp-notifications-worker
     restart: always
     environment:

@@ -1,7 +1,7 @@
 services:
   subscriptions:
     container_name: subscriptions-prod
-    image: fusecons.azurecr.io/subscriptions:latest
+    image: fusecons.azurecr.io/fuse-subscriptions:latest
     environment:
       GO_ENV: production
     ports:

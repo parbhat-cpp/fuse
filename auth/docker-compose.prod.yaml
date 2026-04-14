@@ -1,6 +1,6 @@
 services:
   auth:
-    image: fusecons.azurecr.io/auth:latest
+    image: fusecons.azurecr.io/fuse-auth:latest
     container_name: auth_service
     ports:
       - "5000:5000"
