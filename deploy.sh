@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Create external networks if they don't exist
+networks=(
+    "backend_fuse-network"
+    "notifications_notifications-network"
+)
+
+for network in "${networks[@]}"; do
+    if ! docker network ls --format '{{.Name}}' | grep -q "^${network}$"; then
+        echo "Creating network: $network"
+        docker network create "$network"
+    else
+        echo "Network already exists: $network"
+    fi
+done
+
 # Collect compose files — root nginx first, then services
 compose_args=()
 
