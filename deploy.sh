@@ -41,20 +41,16 @@ fi
 
 echo "Deploying with ${#compose_args[@]} compose file(s)..."
 
-echo "Removing stale containers..."
-docker rm -f \
-    redis-main \
-    redis-notifications \
-    backend-prod \
-    notifications-prod \
-    subscriptions-prod \
-    frontend-prod \
-    fuse-nginx-1 \
-    auth_service \
-    scheduler-worker \
-    inapp-notifications-worker \
-    2>/dev/null || true
+echo "Pulling latest images..."
 docker compose "${compose_args[@]}" pull
-docker compose "${compose_args[@]}" up -d --remove-orphans
+
+echo "Stopping containers..."
+docker compose "${compose_args[@]}" down
+
+echo "Starting containers..."
+docker compose "${compose_args[@]}" up -d
+
+echo "Cleaning up unused images..."
+docker image prune -f
 
 echo "Deploy complete"
