@@ -30,7 +30,7 @@ jobs:
           REGISTRY: fusecons.azurecr.io
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          bash scripts/build_push.sh
+          bash build_push.sh
 
       - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.0
@@ -43,4 +43,4 @@ jobs:
             echo "${{ secrets.ACR_PASSWORD }}" | docker login fusecons.azurecr.io \
               -u "${{ secrets.ACR_USERNAME }}" --password-stdin
             cd /home/${{ secrets.AZURE_USER }}/fuse
-            bash scripts/deploy.sh
+            bash deploy.sh
