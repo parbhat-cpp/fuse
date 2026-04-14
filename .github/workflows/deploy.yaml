@@ -43,4 +43,7 @@ jobs:
             echo "${{ secrets.ACR_PASSWORD }}" | docker login fusecons.azurecr.io \
               -u "${{ secrets.ACR_USERNAME }}" --password-stdin
             cd /home/${{ secrets.AZURE_USER }}/fuse
+
+            git pull origin main
+
             bash deploy.sh
