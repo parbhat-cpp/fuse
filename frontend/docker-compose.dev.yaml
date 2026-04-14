@@ -1,5 +1,5 @@
 services:
-  development:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -10,3 +10,11 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+    networks:
+      - backend_fuse-network
+      - notifications_notifications-network
+networks:
+  backend_fuse-network:
+    external: true
+  notifications_notifications-network:
+    external: true

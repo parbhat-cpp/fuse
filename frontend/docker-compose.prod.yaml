@@ -1,8 +1,16 @@
 services:
-  frontend-prod:
+  frontend:
     image: fusecons.azurecr.io/fuse-frontend:latest
     container_name: frontend-prod
     ports:
       - "5173:3000"
     env_file:
       - .env
+    networks:
+      - backend_fuse-network
+      - notifications_notifications-network
+networks:
+  backend_fuse-network:
+    external: true
+  notifications_notifications-network:
+    external: true
