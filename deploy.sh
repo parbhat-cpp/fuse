@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Get absolute path to project root
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Create external networks if they don't exist
 networks=(
     "backend_fuse-network"
@@ -20,18 +23,18 @@ done
 compose_args=()
 
 # Root nginx compose always goes first
-if [[ -f "./docker-compose.prod.yaml" ]]; then
-    compose_args+=("-f" "$(realpath ./docker-compose.prod.yaml)")
+if [[ -f "${PROJECT_ROOT}/docker-compose.prod.yaml" ]]; then
+    compose_args+=("-f" "${PROJECT_ROOT}/docker-compose.prod.yaml")
 fi
 
 # Then all nested service compose files
 while IFS= read -r -d '' file; do
     realpath_file="$(realpath "$file")"
     # Skip the root one — already added
-    [[ "$realpath_file" == "$(realpath ./docker-compose.prod.yaml)" ]] && continue
+    [[ "$realpath_file" == "$(realpath "${PROJECT_ROOT}/docker-compose.prod.yaml")" ]] && continue
     compose_args+=("-f" "$realpath_file")
-done < <(find . -mindepth 2 -name "docker-compose.prod.yaml" \
-    -not -path "./.git/*" \
+done < <(find "${PROJECT_ROOT}" -mindepth 2 -name "docker-compose.prod.yaml" \
+    -not -path "*/.git/*" \
     -print0 | sort -z)
 
 if [[ ${#compose_args[@]} -eq 0 ]]; then
@@ -54,10 +57,11 @@ docker rm -f \
     2>/dev/null || true
 
 echo "Pulling latest images..."
-docker compose "${compose_args[@]}" --env-file .env pull
+cd "${PROJECT_ROOT}"
+docker compose "${compose_args[@]}" pull
 
 echo "Starting containers..."
-docker compose "${compose_args[@]}" --env-file .env up -d
+docker compose "${compose_args[@]}" up -d
 
 echo "Cleaning up unused images..."
 docker image prune -f
