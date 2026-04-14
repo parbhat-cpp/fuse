@@ -35,17 +35,26 @@ done < <(find . -mindepth 2 -name "docker-compose.prod.yaml" \
     -print0 | sort -z)
 
 if [[ ${#compose_args[@]} -eq 0 ]]; then
-    echo "ERROR: No docker-compose.prod.yaml files found" >&2
+    echo "ERROR: No compose files found" >&2
     exit 1
 fi
 
-echo "Deploying with ${#compose_args[@]} compose file(s)..."
+echo "Force removing stale containers..."
+docker rm -f \
+    redis-main \
+    redis-notifications \
+    backend-prod \
+    notifications-prod \
+    subscriptions-prod \
+    frontend-prod \
+    fuse-nginx-1 \
+    auth_service \
+    scheduler-worker \
+    inapp-notifications-worker \
+    2>/dev/null || true
 
 echo "Pulling latest images..."
 docker compose "${compose_args[@]}" pull
-
-echo "Stopping containers..."
-docker compose "${compose_args[@]}" down
 
 echo "Starting containers..."
 docker compose "${compose_args[@]}" up -d
