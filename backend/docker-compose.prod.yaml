@@ -36,4 +36,5 @@ volumes:
   redis-data:
 networks:
   fuse-network:
-    driver: bridge
+    external: true
+    name: backend_fuse-network
