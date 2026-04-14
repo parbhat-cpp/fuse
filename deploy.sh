@@ -54,10 +54,10 @@ docker rm -f \
     2>/dev/null || true
 
 echo "Pulling latest images..."
-docker compose "${compose_args[@]}" pull
+docker compose "${compose_args[@]}" --env-file .env pull
 
 echo "Starting containers..."
-docker compose "${compose_args[@]}" up -d
+docker compose "${compose_args[@]}" --env-file .env up -d
 
 echo "Cleaning up unused images..."
 docker image prune -f
