@@ -8,65 +8,39 @@ concurrency:
   group: deploy-production
   cancel-in-progress: true
 
-env:
-  REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
-  IMAGE_TAG: ${{ github.sha }}
-
 jobs:
-  detect-changes:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    outputs:
-      services_to_build: ${{ steps.detect.outputs.services_to_build }}
-      has_builds: ${{ steps.detect.outputs.has_builds }}
-      needs_deploy: ${{ steps.detect.outputs.needs_deploy }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v2
         with:
-          fetch-depth: 2
-      - name: Detect changed services
-        id: detect
-        run: bash ./detect_changes.sh
+          registry: fusecons.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
-  build-and-push:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has_builds == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Login to ACR
+      - name: Build and push Docker images
+        env:
+          REGISTRY: fusecons.azurecr.io
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "${{ secrets.ACR_PASSWORD }}" | docker login "$REGISTRY" \
-            -u "${{ secrets.ACR_USERNAME }}" --password-stdin
+          bash scripts/build_push.sh
 
-      - name: Build & Push changed services
-        run: |
-          echo '${{ needs.detect-changes.outputs.services_to_build }}' \
-            | jq -r '.[]' \
-            | while read -r service; do
-                echo "::group::Building $service"
-                bash ./build_push.sh "$service"
-                echo "::endgroup::"
-              done
-
-  deploy:
-    needs: [detect-changes, build-and-push]
-    # Run if something needs deploying, even if build was skipped
-    if: |
-      always() &&
-      needs.detect-changes.outputs.needs_deploy == 'true' &&
-      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy via SSH
+      - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.AZURE_HOST }}
+          host: ${{ secrets.AZUR_EHOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
             set -euo pipefail
-            echo "${{ secrets.ACR_PASSWORD }}" | docker login "${{ secrets.ACR_LOGIN_SERVER }}" \
+            echo "${{ secrets.ACR_PASSWORD }}" | docker login fusecons.azurecr.io \
               -u "${{ secrets.ACR_USERNAME }}" --password-stdin
             cd /home/${{ secrets.AZURE_USER }}/fuse
-            bash ./deploy.sh
+            bash scripts/deploy.sh
