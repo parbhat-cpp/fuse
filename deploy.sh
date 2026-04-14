@@ -41,6 +41,7 @@ fi
 
 echo "Deploying with ${#compose_args[@]} compose file(s)..."
 
+docker compose "${compose_args[@]}" down --remove-orphans
 docker compose "${compose_args[@]}" pull
 docker compose "${compose_args[@]}" up -d --remove-orphans
 
