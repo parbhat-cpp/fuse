@@ -2,11 +2,7 @@
 set -euo pipefail
 
 DEPLOY_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$DEPLOY_DIR"
-
-set -o allexport
-source .env
-set +o allexport
+cd "$DEPLOY_DIR"1
 
 # Collect compose files — root nginx first, then services
 compose_args=()
