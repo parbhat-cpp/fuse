@@ -8,6 +8,8 @@ services:
       - 8000:3000
     env_file:
       - .env
+    volumes:
+      - ./.env:/app/.env
     depends_on:
       - redis-notifications
     networks:

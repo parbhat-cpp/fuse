@@ -6,6 +6,8 @@ services:
       NODE_ENV: production
     env_file:
       - .env
+    volumes:
+      - ./.env:/app/.env
     networks:
       - backend_fuse-network
 networks:
