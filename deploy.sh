@@ -1,30 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Collect compose files — root nginx first, then services
+source "$(dirname "$0")/services.sh"
+
 compose_args=()
 
-# Root nginx compose always goes first
-if [[ -f "./docker-compose.prod.yaml" ]]; then
-    compose_args+=("-f" "$(realpath ./docker-compose.prod.yaml)")
-fi
+for SERVICE_DIR in "${!SERVICES[@]}"; do
+    if [[ "$SERVICE_DIR" == "." ]]; then
+        COMPOSE_FILE="./docker-compose.prod.yaml"
+    else
+        COMPOSE_FILE="./${SERVICE_DIR}/docker-compose.prod.yaml"
+    fi
 
-# Then all nested service compose files
-while IFS= read -r -d '' file; do
-    realpath_file="$(realpath "$file")"
-    # Skip the root one — already added
-    [[ "$realpath_file" == "$(realpath ./docker-compose.prod.yaml)" ]] && continue
-    compose_args+=("-f" "$realpath_file")
-done < <(find . -mindepth 2 -name "docker-compose.prod.yaml" \
-    -not -path "./.git/*" \
-    -print0 | sort -z)
+    if [[ ! -f "$COMPOSE_FILE" ]]; then
+        echo "SKIP: no compose file found for $SERVICE_DIR"
+        continue
+    fi
+
+    compose_args+=("-f" "$(realpath "$COMPOSE_FILE")")
+done
 
 if [[ ${#compose_args[@]} -eq 0 ]]; then
-    echo "ERROR: No docker-compose.prod.yaml files found" >&2
+    echo "ERROR: No compose files found" >&2
     exit 1
 fi
 
-echo "Deploying with ${#compose_args[@]} compose file(s)..."
+echo "Deploying ${#compose_args[@]} service(s)..."
 
 docker compose "${compose_args[@]}" pull
 docker compose "${compose_args[@]}" up -d --remove-orphans
