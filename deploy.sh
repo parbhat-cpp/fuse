@@ -41,7 +41,19 @@ fi
 
 echo "Deploying with ${#compose_args[@]} compose file(s)..."
 
-docker compose "${compose_args[@]}" down
+echo "Removing stale containers..."
+docker rm -f \
+    redis-main \
+    redis-notifications \
+    backend-prod \
+    notifications-prod \
+    subscriptions-prod \
+    frontend-prod \
+    fuse-nginx-1 \
+    auth_service \
+    scheduler-worker \
+    inapp-notifications-worker \
+    2>/dev/null || true
 docker compose "${compose_args[@]}" pull
 docker compose "${compose_args[@]}" up -d --remove-orphans
 
