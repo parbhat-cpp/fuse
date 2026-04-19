@@ -59,6 +59,7 @@ for SERVICE_DIR in "${unique_services[@]}"; do
         done < <(env)
 
         docker build \
+            --no-cache \
             "${build_args[@]}" \
             -f "$DOCKERFILE" \
             -t "$SHA_TAG" \
