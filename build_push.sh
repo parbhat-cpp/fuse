@@ -53,10 +53,14 @@ for SERVICE_DIR in "${unique_services[@]}"; do
 
     echo "Building $SERVICE_DIR -> $IMAGE_NAME"
     if [[ "$SERVICE_DIR" == "frontend" ]]; then
+        build_args=()
+        while IFS='=' read -r key value; do
+            [[ "$key" == VITE_* ]] && build_args+=("--build-arg" "${key}=${value}")
+        done < <(env)
+
         docker build \
+            "${build_args[@]}" \
             -f "$DOCKERFILE" \
-            --build-arg VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
-            --build-arg VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
             -t "$SHA_TAG" \
             -t "$LATEST_TAG" \
             "$SERVICE_DIR"
