@@ -52,7 +52,17 @@ for SERVICE_DIR in "${unique_services[@]}"; do
     LATEST_TAG="${REGISTRY}/${IMAGE_NAME}:latest"
 
     echo "Building $SERVICE_DIR -> $IMAGE_NAME"
-    docker build -f "$DOCKERFILE" -t "$SHA_TAG" -t "$LATEST_TAG" "$SERVICE_DIR"
+    if [[ "$SERVICE_DIR" == "frontend" ]]; then
+        docker build \
+            -f "$DOCKERFILE" \
+            --build-arg VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
+            --build-arg VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
+            -t "$SHA_TAG" \
+            -t "$LATEST_TAG" \
+            "$SERVICE_DIR"
+    else
+        docker build -f "$DOCKERFILE" -t "$SHA_TAG" -t "$LATEST_TAG" "$SERVICE_DIR"
+    fi
 
     echo "Pushing $IMAGE_NAME..."
     docker push "$SHA_TAG"

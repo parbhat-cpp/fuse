@@ -29,6 +29,20 @@ jobs:
         env:
           REGISTRY: fusecons.azurecr.io
           IMAGE_TAG: ${{ github.sha }}
+          VITE_BASE_URL: ${{ secrets.VITE_BASE_URL }}
+          VITE_SUPABASE_AUTH_KEY: ${{ secrets.VITE_SUPABASE_AUTH_KEY }}
+          VITE_HOST: ${{ secrets.VITE_HOST }}
+
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
+
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_YT_API_KEY: ${{ secrets.VITE_YT_API_KEY }}
+
+          VITE_RAZORPAY_KEY_ID: ${{ secrets.VITE_RAZORPAY_KEY_ID }}
+          VITE_RAZORPAY_KEY_SECRET: ${{ secrets.VITE_RAZORPAY_KEY_SECRET }}
         run: |
           bash build_push.sh
 
