@@ -2,7 +2,7 @@ services:
   nginx:
     image: fusecons.azurecr.io/fuse-nginx:latest
     ports:
-      - "9090:80"
+      - "80:80"
     networks:
       - backend_fuse-network
       - notifications_notifications-network
