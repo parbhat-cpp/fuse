@@ -1,5 +1,7 @@
+'use client'
+
 import { clsx, type ClassValue } from 'clsx'
-import { API_URL, BASE_URL, SUPABASE_AUTH_KEY } from 'config'
+import { SUPABASE_AUTH_KEY } from 'config'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -79,4 +81,11 @@ export function getNextUpdate(diffMs) {
   if (abs < 3_600_000) return 60_000
   if (abs < 86_400_000) return 3_600_000
   return 86_400_000
+}
+
+export function isAlphanumeric(str: string) {
+  const alpNumregex = /^[a-zA-Z0-9]$/
+  const test = alpNumregex.test(str)
+  
+  return test
 }
