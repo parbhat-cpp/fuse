@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react'
 import { FaCopy } from "react-icons/fa";
 import { IoCheckmarkDone } from "react-icons/io5";
