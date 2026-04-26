@@ -180,6 +180,8 @@ export class RoomsService {
     const userId = client.data.userId;
     const publiclyAccessibleRoom = payload.publiclyAccessibleRoom;
 
+    Logger.log(`User ${userId} is trying to join room ${roomId}`);
+
     if (!roomId) {
       client.emit(RoomEvents.ROOM_NOT_FOUND);
       return;
@@ -252,9 +254,11 @@ export class RoomsService {
         return;
       }
 
-      roomDataJson.attendeesCount += 1;
-      roomDataJson.attendees.push(user);
-      roomDataJson.attendeesId.push(userId);
+      if(!roomDataJson.attendees.some(u => u.id.match(userId))) {
+        roomDataJson.attendees.push(user);
+        roomDataJson.attendeesId.push(userId);
+        roomDataJson.attendeesCount = roomDataJson.attendeesId.length;
+      }
 
       await this.redisService.redis.hset(
         `${roomType}:${roomId}`,
@@ -334,7 +338,7 @@ export class RoomsService {
           (attendeeId) => attendeeId !== userId,
         );
 
-        roomDataJson.attendeesCount -= 1;
+        roomDataJson.attendeesCount = roomDataJson.attendeesId.length;
 
         await this.redisService.redis.hset(
           `${roomType}:${roomId}`,
@@ -418,7 +422,7 @@ export class RoomsService {
         (attendee) => attendee !== attendeeUserId,
       );
 
-      roomDataJson.attendeesCount -= 1;
+      roomDataJson.attendeesCount = roomDataJson.attendeesId.length;
 
       await this.redisService.redis.hset(
         `${roomType}:${roomId}`,

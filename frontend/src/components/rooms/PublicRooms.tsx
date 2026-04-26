@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { act, useEffect, useRef, useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { API_URL } from 'config'
 import { List, useDynamicRowHeight } from 'react-window'
@@ -83,7 +83,11 @@ export default function PublicRooms() {
         () => data['roomData']['currentActivityData'],
       )
       navigate({
-        to: '/app/room',
+        to: '/app/room/',
+        search: {
+          activity: data['roomData']['currentActivityData'] ? data['roomData']['currentActivityData']['id'] : '',
+          roomId: data['roomData']['roomId'],
+        },
       })
     });
 

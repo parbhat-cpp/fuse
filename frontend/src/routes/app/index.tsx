@@ -52,6 +52,9 @@ function RouteComponent() {
 
       navigate({
         to: '/app/room',
+        search: {
+          roomId: data['roomData']['roomId'],
+        },
       })
     })
 
@@ -83,7 +86,11 @@ function RouteComponent() {
           () => data['roomData']['currentActivityData'],
         )
         navigate({
-          to: '/app/room',
+          to: '/app/room/',
+          search: {
+            activity: data['roomData']['currentActivityData'] ? data['roomData']['currentActivityData']['id'] : '',
+            roomId: data['roomData']['roomId'],
+          },
         })
       }
     })
