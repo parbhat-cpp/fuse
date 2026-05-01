@@ -16,7 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { canJoinRoom, roomJoinLink, toLocalDate } from '@/lib/utils'
 import { useSocket } from '@/socket'
-import { currentRoomActivity, roomActivities, roomData } from '@/store/room'
+import { roomActivities, roomData } from '@/store/room'
 import z from 'zod'
 import { zodValidator } from '@tanstack/zod-adapter'
 
@@ -82,9 +82,6 @@ function RouteComponent() {
       } else {
         roomData.setState(() => data['roomData'])
         roomActivities.setState(() => data['roomActivities'])
-        currentRoomActivity.setState(
-          () => data['roomData']['currentActivityData'],
-        )
         navigate({
           to: '/app/room/',
           search: {

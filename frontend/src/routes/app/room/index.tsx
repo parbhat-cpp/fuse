@@ -67,13 +67,10 @@ function RouteComponent() {
         socket.on('enter-room', (data) => {
             roomData.setState(() => data['roomData'])
             roomActivities.setState(() => data['roomActivities'])
-            currentRoomActivity.setState(
-                () => data['roomData']['currentActivityData'],
-            )
         });
 
         socket.on("new-attendee", (data) => {
-            const attendee = JSON.parse(data['joinee']);
+            const attendee = data['joinee'];
 
             roomData.setState(() => data['roomData']);
 
@@ -110,13 +107,22 @@ function RouteComponent() {
             });
         })
 
+        if (activity) {
+            socket.emit("sync-activity", { roomId, activity });
+        }
+
+        socket.on("load-activity", (data) => {
+            currentRoomActivity.setState({ ...data.activityData, id: data.id });
+        })
+
         return () => {
             socket.off("new-attendee");
             socket.off("attendee-left");
             socket.off("leave-room");
             socket.off("attendee-kicked");
             socket.off("room-not-found");
-        }
+            socket.off("load-activity");
+        };
     }, [socket]);
 
     return <div className='flex flex-col gap-5 bg-primary-surface p-5 h-screen'>
@@ -142,7 +148,7 @@ function RouteComponent() {
             </div>
         </div>
         <div className='flex-1 bg-red-100 rounded-lg overflow-y-auto'>
-            <AcitivitySelectNPlay />
+            <AcitivitySelectNPlay activityId={activity} />
         </div>
         {/* bottom bar */}
         <div className='lg:flex hidden gap-5 items-center place-self-end px-4 text-primary-paragraph'>

@@ -6,7 +6,7 @@ import PublicRoomListItem from './PublicRoomListItem'
 import { getToken } from '@/lib/utils'
 import { useSocket } from '@/socket'
 import toast from 'react-hot-toast'
-import { currentRoomActivity, roomActivities, roomData } from '@/store/room'
+import { roomActivities, roomData } from '@/store/room'
 import { useNavigate } from '@tanstack/react-router'
 
 export default function PublicRooms() {
@@ -79,9 +79,6 @@ export default function PublicRooms() {
     socket.on('enter-room', (data) => {
       roomData.setState(() => data['roomData'])
       roomActivities.setState(() => data['roomActivities'])
-      currentRoomActivity.setState(
-        () => data['roomData']['currentActivityData'],
-      )
       navigate({
         to: '/app/room/',
         search: {

@@ -79,7 +79,14 @@ const QueryBar = (props: QueryBarProps) => {
     socket?.emit('set-video', {
       roomId: roomData.state?.roomId,
       videoId,
-    })
+    });
+    socket?.emit('update-activity', {
+      roomId: roomData.state?.roomId,
+      activityId: currentRoomActivity.state?.id,
+      activityData: {
+        videoId,
+      },
+    });
     currentRoomActivity.setState((prev) => ({ ...prev, videoId }))
     setOpen(false)
   }

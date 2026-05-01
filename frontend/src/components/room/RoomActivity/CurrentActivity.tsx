@@ -44,38 +44,25 @@ const CurrentActivity = () => {
   }, [videoId])
 
   useEffect(() => {
+    const pauseHandler = (_: Event) => socket?.emit('pause-video', roomData.state?.roomId)
+    const playHandler = (_: Event) => socket?.emit('play-video', roomData.state?.roomId)
+    const seekHandler = (_: Event) => socket?.emit('seek-video', {
+      roomId: roomData.state?.roomId,
+      position: ytPlayerRef.current?.currentTime,
+    })
+
     if (ytPlayerRef.current) {
-      ytPlayerRef.current.addEventListener('pause', (_) => {
-        socket?.emit('pause-video', roomData.state?.roomId)
-      })
-
-      ytPlayerRef.current.addEventListener('play', (_) => {
-        socket?.emit('play-video', roomData.state?.roomId)
-      })
-
-      ytPlayerRef.current.addEventListener('seeked', (_) => {
-        socket?.emit('seek-video', {
-          roomId: roomData.state?.roomId,
-          position: ytPlayerRef.current?.currentTime,
-        })
-      })
+      ytPlayerRef.current.addEventListener('pause', pauseHandler)
+      ytPlayerRef.current.addEventListener('play', playHandler)
+      ytPlayerRef.current.addEventListener('seeked', seekHandler)
     }
 
     return () => {
-      ytPlayerRef.current?.removeEventListener('pause', (_) =>
-        socket?.emit('pause-video', roomData.state?.roomId),
-      )
-      ytPlayerRef.current?.removeEventListener('play', (_) =>
-        socket?.emit('play-video', roomData.state?.roomId),
-      )
-      ytPlayerRef.current?.removeEventListener('seeked', (_) =>
-        socket?.emit('seek-video', {
-          roomId: roomData.state?.roomId,
-          position: ytPlayerRef.current?.currentTime,
-        }),
-      )
+      ytPlayerRef.current?.removeEventListener('pause', pauseHandler)
+      ytPlayerRef.current?.removeEventListener('play', playHandler)
+      ytPlayerRef.current?.removeEventListener('seeked', seekHandler)
     }
-  }, [ytPlayerRef.current])
+  }, [socket])
 
   useEffect(() => {
     socket?.on('set-video-play', (username) => {
