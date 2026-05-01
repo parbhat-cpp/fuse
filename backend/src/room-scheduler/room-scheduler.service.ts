@@ -83,8 +83,8 @@ export class RoomSchedulerService {
 
     const roomData: Room = {
       admin: scheduledRoom.admin,
-      currentActivityData: {},
-      currentActivityId: '',
+      // currentActivityData: {},
+      // currentActivityId: '',
       attendees: [],
       attendeesCount: 1,
       attendeesId: [scheduledRoom.admin.id],
