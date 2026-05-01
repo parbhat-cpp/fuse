@@ -17,12 +17,12 @@ export const formatRoomData = (
       ? new Date(payload.startAt).toISOString()
       : new Date().toISOString(),
     createdAt: payload?.createdAt?.toISOString() ?? new Date().toISOString(),
-    currentActivityData: payload.currentActivityData
-      ? JSON.stringify(payload.currentActivityData)
-      : undefined,
-    currentActivityId: payload.currentActivityId
-      ? payload.currentActivityId
-      : undefined,
+    // currentActivityData: payload.currentActivityData
+    //   ? JSON.stringify(payload.currentActivityData)
+    //   : undefined,
+    // currentActivityId: payload.currentActivityId
+    //   ? payload.currentActivityId
+    //   : undefined,
   };
 };
 
@@ -37,9 +37,9 @@ export const unformatRoomData = (payload: Record<string, string>): Room => {
     roomName: payload.roomName,
     startAt: new Date(payload.startAt),
     createdAt: new Date(payload.createdAt),
-    currentActivityData: payload.currentActivityData
-      ? JSON.parse(payload.currentActivityData)
-      : undefined,
-    currentActivityId: payload.currentActivityId ?? undefined,
+    // currentActivityData: payload.currentActivityData
+    //   ? JSON.parse(payload.currentActivityData)
+    //   : undefined,
+    // currentActivityId: payload.currentActivityId ?? undefined,
   };
 };

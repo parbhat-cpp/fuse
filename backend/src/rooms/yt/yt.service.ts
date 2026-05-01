@@ -27,11 +27,11 @@ export class YtService {
 
     if (!isMember) client.emit(RoomEvents.NOT_MEMBER);
 
-    roomData.currentActivityData = {
-      id: 'youtube',
-      name: 'YouTube',
-      videoId,
-    };
+    // roomData.currentActivityData = {
+    //   id: 'youtube',
+    //   name: 'YouTube',
+    //   videoId,
+    // };
 
     this.redisService.redis.hset(
       `${roomType}:${roomId}`,

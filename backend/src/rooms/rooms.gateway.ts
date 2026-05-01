@@ -199,8 +199,28 @@ export class RoomsGateway
     await this.roomsService.sendMessage(client, payload, this.userIdToSocketId);
   }
 
-  @SubscribeMessage(RoomEvents.SET_ACTIVITY)
-  async setActivity(
+  // @SubscribeMessage(RoomEvents.SET_ACTIVITY)
+  // async setActivity(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody()
+  //   {
+  //     roomId,
+  //     activityId,
+  //   }: {
+  //     roomId: string;
+  //     activityId: string;
+  //   },
+  // ) {
+  //   await this.roomsService.setActivity(
+  //     client,
+  //     roomId,
+  //     activityId,
+  //     this.userIdToSocketId,
+  //   );
+  // }
+
+  @SubscribeMessage(RoomEvents.SYNC_ACTIVITY)
+  async syncActivity(
     @ConnectedSocket() client: Socket,
     @MessageBody()
     {
@@ -211,10 +231,33 @@ export class RoomsGateway
       activityId: string;
     },
   ) {
-    await this.roomsService.setActivity(
+    await this.roomsService.syncActivity(
       client,
       roomId,
       activityId,
+      this.userIdToSocketId,
+    );
+  }
+
+  @SubscribeMessage(RoomEvents.UPDATE_ACTIVITY)
+  async updateActivity(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    {
+      roomId,
+      activityId,
+      activityData,
+    }: {
+      roomId: string;
+      activityId: string;
+      activityData: any;
+    },
+  ) {
+    await this.roomsService.updateActivity(
+      client,
+      roomId,
+      activityId,
+      activityData,
       this.userIdToSocketId,
     );
   }

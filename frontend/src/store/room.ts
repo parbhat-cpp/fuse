@@ -6,7 +6,6 @@ export const currentRoomActivity = new Store<
   | {
       id: string
       name: string
-      // logo: string;
       videoId?: string
     }
   | undefined

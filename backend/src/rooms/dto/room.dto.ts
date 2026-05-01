@@ -38,9 +38,9 @@ export class Room {
   @IsDate()
   startAt?: Date;
 
-  @IsString()
-  currentActivityId: string | undefined;
+  // @IsString()
+  // currentActivityId: string | undefined;
 
-  @IsObject()
-  currentActivityData: Record<string, any> | undefined;
+  // @IsObject()
+  // currentActivityData: Record<string, any> | undefined;
 }

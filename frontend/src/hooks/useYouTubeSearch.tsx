@@ -1,3 +1,4 @@
+import { isAlphanumeric } from '@/lib/utils'
 import { YOUTUBE_API_KEY } from 'config'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -37,6 +38,17 @@ const useYouTubeSearch = () => {
         setSearchResults([])
         setLoadNext('')
         return
+      }
+      if (searchResults.length) {  
+        window.addEventListener('keydown', (event) => {
+          if (event.ctrlKey || event.altKey || event.metaKey) return;
+          if (isAlphanumeric(event.key) || event.code === 'Backspace') {
+            console.log(`Key pressed: ${event.key}`);
+            console.log(`Physical code: ${event.code}`);
+            setSearchResults([])
+            setLoadNext('')
+          }
+        });
       }
       await handleYoutubeSearch(searchQuery)
     }, 300)

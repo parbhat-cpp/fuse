@@ -30,6 +30,9 @@ const MembersDrawer = (props: MembersDrawerProps) => {
         });
     }
 
+    console.log(props.members);
+    
+
     return (
         <Drawer direction='right'>
             <DrawerTrigger asChild>
@@ -47,7 +50,18 @@ const MembersDrawer = (props: MembersDrawerProps) => {
                         </div>
                         {
                             props.members?.map((member: string, index: number) => {
-                                const memberData = JSON.parse(member);
+                                let memberData;
+
+                                if (typeof member === 'string') {
+                                    try {
+                                        memberData = JSON.parse(member);
+                                    } catch (error) {
+                                        console.error('Error parsing member data:', error);
+                                        return null; // Skip this member if there's an error
+                                    }
+                                } else {
+                                    memberData = member;
+                                }
 
                                 return <div key={memberData['id']} className='flex gap-3 items-center px-4 py-2'>
                                     <img src={decodeURIComponent(memberData['avatar_url'])} height={50} width={50} className='rounded-full' />

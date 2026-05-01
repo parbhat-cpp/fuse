@@ -2,36 +2,42 @@ import { useStore } from '@tanstack/react-store'
 import React, { lazy, useEffect } from 'react'
 import { currentRoomActivity, roomActivities, roomData } from '@/store/room'
 import { useSocket } from '@/socket'
+import toast from 'react-hot-toast'
 
 const CurrentActivity = lazy(() => import('./CurrentActivity'))
 
-const AcitivitySelectNPlay = () => {
-  const activityId = useStore(currentRoomActivity, (s) => s?.id)
+const AcitivitySelectNPlay = ({ activityId }: { activityId?: string }) => {
+  const currentActivityId = useStore(currentRoomActivity, (s) => s?.id)
 
   const socket = useSocket('room')
 
-  const handleSelectActivity = (id: string, name: string) => {
-    socket?.emit('set-activity', {
+  const handleSelectActivity = (id: string) => {
+    socket?.emit('sync-activity', {
       roomId: roomData.state?.roomId,
       activityId: id,
     })
-
-    currentRoomActivity.setState({ id, name })
   }
 
   useEffect(() => {
-    socket?.on('set-activity', (data) => {
-      currentRoomActivity.setState({ id: data.activityId, name: data.name })
+    socket?.on('load-activity', (data) => {
+      toast.success(`Activity changed to ${data.id}`)
+      currentRoomActivity.setState({ ...data.activityData, id: data.id })
     })
 
     return () => {
-      socket?.off('set-activity')
+      socket?.off('load-activity')
     }
   }, [socket])
 
+  useEffect(() => {
+    if (activityId) {
+      currentRoomActivity.setState((s) => ({ ...s, id: activityId }));
+    }
+  }, [])
+
   return (
     <div className="px-3 py-2">
-      {!activityId ? (
+      {!currentActivityId ? (
         <>
           {/* Selector */}
           <h4>Select an Activity</h4>
@@ -43,8 +49,6 @@ const AcitivitySelectNPlay = () => {
                   onClick={() =>
                     handleSelectActivity(
                       activity.id,
-                      activity.name,
-                      //   activity.logo,
                     )
                   }
                   className="flex flex-col items-center rounded-md p-1 border-[1px] border-r-2 border-b-2 hover:border-[1px] cursor-pointer border-primary-button transition transform duration-300 ease-in-out"

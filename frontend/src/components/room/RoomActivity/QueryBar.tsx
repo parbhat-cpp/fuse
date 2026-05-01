@@ -79,7 +79,14 @@ const QueryBar = (props: QueryBarProps) => {
     socket?.emit('set-video', {
       roomId: roomData.state?.roomId,
       videoId,
-    })
+    });
+    socket?.emit('update-activity', {
+      roomId: roomData.state?.roomId,
+      activityId: currentRoomActivity.state?.id,
+      activityData: {
+        videoId,
+      },
+    });
     currentRoomActivity.setState((prev) => ({ ...prev, videoId }))
     setOpen(false)
   }
@@ -100,9 +107,9 @@ const QueryBar = (props: QueryBarProps) => {
       >
         {currentRoomActivity.state?.id === 'youtube' && (
           <div>
-            {props.queryData.map((vidData) => (
+            {props.queryData.map((vidData, index) => (
               <div
-                key={vidData.etag}
+                key={vidData.etag + index}
                 className="grid grid-cols-4 gap-2 p-2 cursor-pointer"
                 onClick={() => handleSelectYoutubeVideo(vidData.id.videoId)}
               >

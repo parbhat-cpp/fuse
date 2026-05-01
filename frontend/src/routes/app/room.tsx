@@ -1,6 +1,6 @@
 import useAuth from '@/hooks/useAuth';
 import { roomData } from '@/store/room';
-import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useNavigate, useSearch } from '@tanstack/react-router'
 import { useEffect } from 'react';
 
 export const Route = createFileRoute('/app/room')({
@@ -12,8 +12,10 @@ function RouteComponent() {
   useAuth();
   const navigate = useNavigate();
 
+  const { roomId } = useSearch({ from: '/app/room/' });
+
   useEffect(() => {
-    if (!roomData.state) {
+    if (!roomData.state && !roomId) {
       navigate({
         to: "/app",
       });
